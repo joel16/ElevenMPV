@@ -13,7 +13,7 @@ int XM_Init(const char *path) {
 	xmp_start_player(xmp, 44100, 0);
 	xmp_get_frame_info(xmp, &frame_info);
 	total_samples = (frame_info.total_time * 44.1);
-    return 0;
+	return 0;
 }
 
 SceUInt32 XM_GetSampleRate(void) {
@@ -28,12 +28,12 @@ void XM_Decode(void *buf, unsigned int length, void *userdata) {
 	xmp_play_buffer(xmp, buf, length * (sizeof(SceInt16) * 2), 0);
 	samples_read += length;
 
-    if (samples_read == total_samples)
-        playing = SCE_FALSE;
+	if (samples_read == total_samples)
+		playing = SCE_FALSE;
 }
 
 SceUInt64 XM_GetPosition(void) {
-    return samples_read;
+	return samples_read;
 }
 
 SceUInt64 XM_GetLength(void) {
@@ -42,7 +42,7 @@ SceUInt64 XM_GetLength(void) {
 
 void XM_Term(void) {
 	samples_read = 0;
-    xmp_end_player(xmp);
-    xmp_release_module(xmp);
-    xmp_free_context(xmp);
+	xmp_end_player(xmp);
+	xmp_release_module(xmp);
+	xmp_free_context(xmp);
 }
