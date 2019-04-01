@@ -15,3 +15,11 @@ A homebrew music player for Playstation VITA that aims to support many different
 - Shuffle/Repeat audio.
 - Next/Previous track in current working directory.
 - Display ID3v1 and ID3v2 metadata for MP3 files.
+
+# Credits:
+- MPG123 contributors.
+- dr_libs by mackron.
+- stb_vorbis by nothings and contributors.
+- jar_xm by Joshua Reisenauer.
+- Preetisketch for startup.png (banner).
+- Eleven Music Player contributors for design elements.
