@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "dirbrowse.h"
 #include "fs.h"
 #include "menu_displayfiles.h"
 #include "textures.h"
@@ -25,7 +26,7 @@ static int GetLastDirectory(void) {
 			return ret;
 		}
 		
-		strcpy(cwd, ROOT_PATH); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
+		strcpy(cwd, ROOT_PATH);
 	}
 	else {
 		SceOff size = 0;
@@ -42,8 +43,12 @@ static int GetLastDirectory(void) {
 		char path[513];
 		sscanf(buf, "%[^\n]s", path);
 	
-		if (FS_DirExists(path)) // Incase a directory previously visited had been deleted, set start path to sdmc:/ to avoid errors.
-			strcpy(cwd, path);
+		if (FS_DirExists(path)) {
+			if (R_SUCCEEDED(Dirbrowse_PopulateFiles(SCE_FALSE)))
+				strcpy(cwd, path);
+			else
+				strcpy(cwd, ROOT_PATH);
+		}
 		else
 			strcpy(cwd, ROOT_PATH);
 		
