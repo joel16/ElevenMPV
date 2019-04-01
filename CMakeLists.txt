@@ -51,6 +51,7 @@ include_directories(
 
 link_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_SOURCE_DIR}/libs
 )
 
 add_executable(${PROJECT_NAME}
@@ -80,8 +81,9 @@ target_link_libraries(${PROJECT_NAME}
   png
   jpeg
   z
-  m
   c
+  xmp-lite
+  m
   mpg123
   SceAppUtil_stub
   SceAudio_stub

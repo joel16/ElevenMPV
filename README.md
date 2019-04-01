@@ -4,10 +4,13 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 # Currently supported formats: (16 bit signed samples)
 - FLAC
+- IT
+- MOD
 - MP3 
 - OGG
+- S3M
 - WAV (A-law and u-law, Microsoft ADPCM, IMA ADPCM)
-- XM (Extended module)
+- XM
 
 # Features:
 - Browse ux0:/ to play the above audio formats.
@@ -20,6 +23,6 @@ A homebrew music player for Playstation VITA that aims to support many different
 - MPG123 contributors.
 - dr_libs by mackron.
 - stb_vorbis by nothings and contributors.
-- jar_xm by Joshua Reisenauer.
+- libxmp-lite contributors.
 - Preetisketch for startup.png (banner).
 - Eleven Music Player contributors for design elements.

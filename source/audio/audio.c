@@ -138,7 +138,8 @@ int Audio_Init(const char *path) {
 		file_type = FILE_TYPE_OGG;
 	else if (!strncasecmp(FS_GetFileExt(path), "wav", 3))
 		file_type = FILE_TYPE_WAV;
-	else if (!strncasecmp(FS_GetFileExt(path), "xm", 2))
+	else if ((!strncasecmp(FS_GetFileExt(path), "it", 2)) || (!strncasecmp(FS_GetFileExt(path), "mod", 3)) || (!strncasecmp(FS_GetFileExt(path), "s3m", 3)) 
+		|| (!strncasecmp(FS_GetFileExt(path), "xm", 2)))
 		file_type = FILE_TYPE_XM;
 
 	switch(file_type) {
