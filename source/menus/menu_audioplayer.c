@@ -143,13 +143,13 @@ void Menu_PlayAudio(char *path) {
 		vita2d_draw_texture(icon_back, 10, 57);
 		StatusBar_Display();
 
-		if ((metadata.has_meta) && (strlen(metadata.title) != 0) && (strlen(metadata.artist) != 0)) {
+		if ((metadata.has_meta) && (metadata.title[0] != '\0') && (metadata.artist[0] != '\0')) {
 			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.title))) + 20, RGBA8(255, 255, 255, 255), 25, strupr(metadata.title));
 			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.artist))) + 55, RGBA8(255, 255, 255, 255), 25, strupr(metadata.artist));
 		}
-		else if ((metadata.has_meta) && (strlen(metadata.title) != 0))
+		else if ((metadata.has_meta) && (metadata.title[0] != '\0'))
 			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.title))) + 15, RGBA8(255, 255, 255, 255), 25, strupr(metadata.title));
-		else if (!metadata.has_meta)
+		else
 			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(filename))) + 15, RGBA8(255, 255, 255, 255), 25, filename);
 
 		vita2d_draw_rectangle(0, 124, 400, 400, RGBA8(97, 97, 97, 255));
