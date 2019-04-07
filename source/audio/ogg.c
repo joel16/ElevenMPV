@@ -28,7 +28,8 @@ SceUInt8 OGG_GetChannels(void) {
 }
 
 void OGG_Decode(void *buf, unsigned int length, void *userdata) {
-	samples_read += stb_vorbis_get_samples_short_interleaved(ogg, ogg_info.channels, (short *)buf, (int)length * ogg_info.channels);
+	stb_vorbis_get_samples_short_interleaved(ogg, ogg_info.channels, (short *)buf, (int)length * ogg_info.channels);
+	samples_read = stb_vorbis_get_sample_offset(ogg);
 
 	if (samples_read == max_lenth)
 		playing = SCE_FALSE;
