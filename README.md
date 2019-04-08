@@ -8,6 +8,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 - MOD
 - MP3 
 - OGG
+- OPUS
 - S3M
 - WAV (A-law and u-law, Microsoft ADPCM, IMA ADPCM)
 - XM
