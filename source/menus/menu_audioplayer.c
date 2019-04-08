@@ -42,8 +42,9 @@ static int Menu_GetMusicList(void) {
 		for (i = 0; i < entryCount; i++) {
 			if ((!strncasecmp(FS_GetFileExt(entries[i].d_name), "flac", 4)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "it", 2)) || 
 				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "mod", 3)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "mp3", 3)) || 
-				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "ogg", 3)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 3)) || 
-				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 3)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 2))) {
+				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "ogg", 3)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "opus", 4)) ||
+				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 3)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 3)) || 
+				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 2))) {
 				strcpy(playlist[count], cwd);
 				strcpy(playlist[count] + strlen(playlist[count]), entries[i].d_name);
 				count++;

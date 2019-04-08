@@ -9,6 +9,7 @@
 #include "flac.h"
 #include "mp3.h"
 #include "ogg.h"
+#include "opus.h"
 #include "wav.h"
 #include "xm.h"
 
@@ -17,8 +18,9 @@ enum Audio_FileType {
 	FILE_TYPE_FLAC = 1,
 	FILE_TYPE_MP3 = 2,
 	FILE_TYPE_OGG = 3,
-	FILE_TYPE_WAV = 4,
-	FILE_TYPE_XM = 5
+	FILE_TYPE_OPUS = 4,
+	FILE_TYPE_WAV = 5,
+	FILE_TYPE_XM = 6
 };
 
 static enum Audio_FileType file_type = FILE_TYPE_NONE;
@@ -39,6 +41,10 @@ static SceUInt32 Audio_GetSampleRate(void) {
 
 		case FILE_TYPE_OGG:
 			sample_rate = OGG_GetSampleRate();
+			break;
+
+		case FILE_TYPE_OPUS:
+			sample_rate = OPUS_GetSampleRate();
 			break;
 
 		case FILE_TYPE_WAV:
@@ -70,6 +76,10 @@ static SceUInt8 Audio_GetChannels(void) {
 
 		case FILE_TYPE_OGG:
 			channels = OGG_GetChannels();
+			break;
+
+		case FILE_TYPE_OPUS:
+			channels = OPUS_GetChannels();
 			break;
 
 		case FILE_TYPE_WAV:
@@ -108,6 +118,10 @@ static void Audio_Decode(void *buf, unsigned int length, void *userdata) {
 				OGG_Decode(buf, length, userdata);
 				break;
 
+			case FILE_TYPE_OPUS:
+				OPUS_Decode(buf, length, userdata);
+				break;
+
 			case FILE_TYPE_WAV:
 				WAV_Decode(buf, length, userdata);
 				break;
@@ -136,6 +150,8 @@ int Audio_Init(const char *path) {
 		file_type = FILE_TYPE_MP3;
 	else if (!strncasecmp(FS_GetFileExt(path), "ogg", 3))
 		file_type = FILE_TYPE_OGG;
+	else if (!strncasecmp(FS_GetFileExt(path), "opus", 4))
+		file_type = FILE_TYPE_OPUS;
 	else if (!strncasecmp(FS_GetFileExt(path), "wav", 3))
 		file_type = FILE_TYPE_WAV;
 	else if ((!strncasecmp(FS_GetFileExt(path), "it", 2)) || (!strncasecmp(FS_GetFileExt(path), "mod", 3)) || (!strncasecmp(FS_GetFileExt(path), "s3m", 3)) 
@@ -155,6 +171,10 @@ int Audio_Init(const char *path) {
 			OGG_Init(path);
 			break;
 
+		case FILE_TYPE_OPUS:
+			OPUS_Init(path);
+			break;
+
 		case FILE_TYPE_WAV:
 			WAV_Init(path);
 			break;
@@ -167,7 +187,7 @@ int Audio_Init(const char *path) {
 			break;
 	}
 
-	vitaAudioInit(Audio_GetSampleRate(), Audio_GetChannels() == 2? SCE_AUDIO_OUT_MODE_STEREO : SCE_AUDIO_OUT_MODE_MONO);
+	vitaAudioInit(Audio_GetSampleRate(), Audio_GetChannels() == 2? SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO : SCE_AUDIO_OUT_PARAM_FORMAT_S16_MONO);
 	vitaAudioSetChannelCallback(0, Audio_Decode, NULL);
 	return 0;
 }
@@ -198,6 +218,10 @@ SceUInt64 Audio_GetPosition(void) {
 
 		case FILE_TYPE_OGG:
 			position = OGG_GetPosition();
+			break;
+
+		case FILE_TYPE_OPUS:
+			position = OPUS_GetPosition();
 			break;
 
 		case FILE_TYPE_WAV:
@@ -235,6 +259,10 @@ SceUInt64 Audio_GetLength(void) {
 			length = OGG_GetLength();
 			break;
 
+		case FILE_TYPE_OPUS:
+			length = OPUS_GetLength();
+			break;
+
 		case FILE_TYPE_XM:
 			length = XM_GetLength();
 			break;
@@ -266,6 +294,10 @@ void Audio_Term(void) {
 
 		case FILE_TYPE_OGG:
 			OGG_Term();
+			break;
+
+		case FILE_TYPE_OPUS:
+			OPUS_Term();
 			break;
 
 		case FILE_TYPE_WAV:

@@ -46,6 +46,7 @@ add_resources(elevenmp_res ${res_files})
 include_directories(
   include
   include/audio
+  include/audio/opus
   include/menus
 )
 
@@ -67,6 +68,7 @@ add_executable(${PROJECT_NAME}
   source/audio/flac.c
   source/audio/mp3.c
   source/audio/ogg.c
+  source/audio/opus.c
   source/audio/stb_vorbis.c
   source/audio/vitaaudiolib.c
   source/audio/wav.c
@@ -82,6 +84,9 @@ target_link_libraries(${PROJECT_NAME}
   jpeg
   z
   c
+  opusfile
+  opus
+  ogg
   xmp-lite
   m
   mpg123

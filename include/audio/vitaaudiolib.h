@@ -8,7 +8,7 @@ extern "C" {
 #include <psp2/audioout.h>
 
 #define VITA_NUM_AUDIO_CHANNELS 1
-#define VITA_NUM_AUDIO_SAMPLES 1024
+#define VITA_NUM_AUDIO_SAMPLES 960
 #define VITA_VOLUME_MAX 0x8000
 
 typedef void (* vitaAudioCallback_t)(void *buf, unsigned int reqn, void *pdata);
