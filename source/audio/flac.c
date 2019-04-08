@@ -5,8 +5,21 @@
 static drflac *flac;
 static drflac_uint64 frames_read = 0;
 
+static void FLAC_MetaCallback(void *pUserData, drflac_metadata *pMetadata) {
+	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE) {
+		if (pMetadata->data.picture.type == DRFLAC_PICTURE_TYPE_COVER_FRONT) {
+			metadata.has_meta = SCE_TRUE;
+
+			if ((!strcasecmp(pMetadata->data.picture.mime, "image/jpg")) || (!strcasecmp(pMetadata->data.picture.mime, "image/jpeg")))
+				metadata.cover_image = vita2d_load_JPEG_buffer((drflac_uint8 *)pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize);
+			else if (!strcasecmp(pMetadata->data.picture.mime, "image/png"))
+				metadata.cover_image = vita2d_load_PNG_buffer((drflac_uint8 *)pMetadata->data.picture.pPictureData);
+		}
+	}
+}
+
 int FLAC_Init(const char *path) {
-	flac = drflac_open_file(path);
+	flac = drflac_open_file_with_metadata(path, FLAC_MetaCallback, NULL);
 	if (flac == NULL)
 		return -1;
 
@@ -38,5 +51,9 @@ SceUInt64 FLAC_GetLength(void) {
 
 void FLAC_Term(void) {
 	frames_read = 0;
+
+	if (metadata.has_meta)
+		metadata.has_meta = SCE_FALSE;
+
 	drflac_close(flac);
 }
