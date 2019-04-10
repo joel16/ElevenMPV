@@ -9,6 +9,7 @@
 #include "fs.h"
 #include "menu_displayfiles.h"
 #include "textures.h"
+#include "touch.h"
 #include "utils.h"
 
 static int GetLastDirectory(void) {
@@ -68,9 +69,11 @@ int main(int argc, char *argv[]) {
 	SCE_CTRL_CANCEL = Utils_GetCancelButton();
 
 	GetLastDirectory();
+	Touch_Init();
 
 	Menu_DisplayFiles();
 
+	Touch_Shutdown();
 	Utils_TermAppUtil();
 
 	Textures_Free();

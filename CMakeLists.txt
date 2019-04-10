@@ -63,6 +63,7 @@ add_executable(${PROJECT_NAME}
   source/main.c
   source/status_bar.c
   source/textures.c
+  source/touch.c
   source/utils.c
   source/audio/audio.c
   source/audio/flac.c

@@ -9,6 +9,7 @@
 #include "fs.h"
 #include "menu_displayfiles.h"
 #include "status_bar.h"
+#include "touch.h"
 #include "textures.h"
 #include "utils.h"
 
@@ -195,6 +196,7 @@ void Menu_PlayAudio(char *path) {
 		}
 
 		Utils_ReadControls();
+		Touch_Update();
 
 		if (pressed & SCE_CTRL_ENTER)
 			Audio_Pause();
@@ -223,6 +225,39 @@ void Menu_PlayAudio(char *path) {
 
 		if (pressed & SCE_CTRL_CANCEL)
 			break;
+
+		if (Touch_Position((410 + ((550 - BUTTON_WIDTH) / 2)), (124 + ((400 - BUTTON_HEIGHT) / 2)), ((410 + ((550 - BUTTON_WIDTH) / 2)) + BUTTON_WIDTH), 
+			((124 + ((400 - BUTTON_HEIGHT) / 2)) + BUTTON_HEIGHT)))
+			Audio_Pause();
+
+		if (Touch_Position(10, 57, 60, 107))
+			break;
+
+		if (Touch_Position((410 + ((550 - BUTTON_WIDTH) / 2) - 136), (124 + ((400 - BUTTON_HEIGHT) / 2)), ((410 + ((550 - BUTTON_WIDTH) / 2) - 136) + BUTTON_WIDTH), 
+			((124 + ((400 - BUTTON_HEIGHT) / 2)) + BUTTON_HEIGHT))) {
+			if (count != 0)
+				Music_HandleNext(SCE_FALSE, MUSIC_STATE_NONE);
+		}
+		else if (Touch_Position((410 + ((550 - BUTTON_WIDTH) / 2) + 136), (124 + ((400 - BUTTON_HEIGHT) / 2)), ((410 + ((550 - BUTTON_WIDTH) / 2) + 136) + BUTTON_WIDTH), 
+			((124 + ((400 - BUTTON_HEIGHT) / 2)) + BUTTON_HEIGHT))) {
+			if (count != 0)
+				Music_HandleNext(SCE_TRUE, MUSIC_STATE_NONE);
+		}
+		
+		if (Touch_Position((410 + ((550 - BUTTON_WIDTH) / 2) - 90), (124 + ((400 - BUTTON_HEIGHT) / 2) + 100), ((410 + ((550 - BUTTON_WIDTH) / 2) - 90) + BUTTON_WIDTH), 
+			((124 + ((400 - BUTTON_HEIGHT) / 2) + 100) + BUTTON_HEIGHT))) {
+			if (state == MUSIC_STATE_SHUFFLE)
+				state = MUSIC_STATE_NONE;
+			else
+				state = MUSIC_STATE_SHUFFLE;
+		}
+		else if (Touch_Position((410 + ((550 - BUTTON_WIDTH) / 2) + 90), (124 + ((400 - BUTTON_HEIGHT) / 2) + 100), ((410 + ((550 - BUTTON_WIDTH) / 2) + 90) + BUTTON_WIDTH), 
+			((124 + ((400 - BUTTON_HEIGHT) / 2) + 100) + BUTTON_HEIGHT))) {
+			if (state == MUSIC_STATE_REPEAT)
+				state = MUSIC_STATE_NONE;
+			else
+				state = MUSIC_STATE_REPEAT;
+		}
 	}
 
 	free(filename);
@@ -237,5 +272,6 @@ void Menu_PlayAudio(char *path) {
 	Audio_Stop();
 	Audio_Term();
 	count = 0;
+	Touch_Reset();
 	Menu_DisplayFiles();
 }
