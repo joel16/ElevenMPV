@@ -1,5 +1,7 @@
 #include <psp2/io/stat.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/shellutil.h>
+#include <psp2/sysmodule.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,7 +73,13 @@ int main(int argc, char *argv[]) {
 	GetLastDirectory();
 	Touch_Init();
 
+	sceShellUtilInitEvents(0);
+	sceSysmoduleLoadModule(SCE_SYSMODULE_MUSIC_EXPORT);
+	Utils_InitPowerTick();
+
 	Menu_DisplayFiles();
+
+	sceSysmoduleUnloadModule(SCE_SYSMODULE_MUSIC_EXPORT);
 
 	Touch_Shutdown();
 	Utils_TermAppUtil();

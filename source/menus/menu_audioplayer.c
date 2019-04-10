@@ -1,4 +1,6 @@
+#include <psp2/appmgr.h>
 #include <psp2/io/dirent.h>
+#include <psp2/power.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -136,6 +138,9 @@ void Menu_PlayAudio(char *path) {
 	Menu_GetMusicList();
 	Menu_InitMusic(path);
 
+	sceAppMgrAcquireBgmPort();
+	Utils_LockPower();
+
 	while(SCE_TRUE) {
 		vita2d_start_drawing();
 		vita2d_clear_screen();
@@ -185,8 +190,10 @@ void Menu_PlayAudio(char *path) {
 		vita2d_swap_buffers();
 
 		if (!playing) {
-			if (state == MUSIC_STATE_NONE)
-				break;
+			if (state == MUSIC_STATE_NONE) {
+				if (count != 0)
+					Music_HandleNext(SCE_TRUE, MUSIC_STATE_NONE);
+			}
 			else if (state == MUSIC_STATE_REPEAT)
 				Music_HandleNext(SCE_FALSE, MUSIC_STATE_REPEAT);
 			else if (state == MUSIC_STATE_SHUFFLE) {
@@ -223,6 +230,9 @@ void Menu_PlayAudio(char *path) {
 				Music_HandleNext(SCE_TRUE, MUSIC_STATE_NONE);
 		}
 
+		if (pressed & SCE_CTRL_START)
+			scePowerRequestDisplayOff();
+
 		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
@@ -243,7 +253,7 @@ void Menu_PlayAudio(char *path) {
 			if (count != 0)
 				Music_HandleNext(SCE_TRUE, MUSIC_STATE_NONE);
 		}
-		
+
 		if (Touch_Position((410 + ((550 - BUTTON_WIDTH) / 2) - 90), (124 + ((400 - BUTTON_HEIGHT) / 2) + 100), ((410 + ((550 - BUTTON_WIDTH) / 2) - 90) + BUTTON_WIDTH), 
 			((124 + ((400 - BUTTON_HEIGHT) / 2) + 100) + BUTTON_HEIGHT))) {
 			if (state == MUSIC_STATE_SHUFFLE)
@@ -273,5 +283,6 @@ void Menu_PlayAudio(char *path) {
 	Audio_Term();
 	count = 0;
 	Touch_Reset();
+	Utils_UnlockPower();
 	Menu_DisplayFiles();
 }

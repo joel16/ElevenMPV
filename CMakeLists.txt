@@ -91,6 +91,7 @@ target_link_libraries(${PROJECT_NAME}
   xmp-lite
   m
   mpg123
+  SceAppMgr_stub
   SceAppUtil_stub
   SceAudio_stub
   SceAudiodec_stub
@@ -100,6 +101,7 @@ target_link_libraries(${PROJECT_NAME}
   SceGxm_stub
   ScePower_stub
   SceRtc_stub
+  SceShellSvc_stub
   SceSysmodule_stub
   SceTouch_stub
 )
