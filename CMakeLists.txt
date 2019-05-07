@@ -58,6 +58,7 @@ link_directories(
 add_executable(${PROJECT_NAME}
   ${elevenmp_res}
   source/common.c
+  source/config.c
   source/dirbrowse.c
   source/fs.c
   source/main.c
