@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "config.h"
 #define DR_FLAC_IMPLEMENTATION
 #include "dr_flac.h"
 
@@ -19,7 +20,7 @@ static void FLAC_MetaCallback(void *pUserData, drflac_metadata *pMetadata) {
 }
 
 int FLAC_Init(const char *path) {
-	flac = drflac_open_file_with_metadata(path, FLAC_MetaCallback, NULL);
+	flac = config.meta_flac? drflac_open_file_with_metadata(path, FLAC_MetaCallback, NULL) : drflac_open_file(path);
 	if (flac == NULL)
 		return -1;
 

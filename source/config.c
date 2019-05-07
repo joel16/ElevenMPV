@@ -24,7 +24,7 @@ int Config_Save(config_t config) {
 	char *buf = malloc(64);
 	int len = snprintf(buf, 64, config_file, CONFIG_VERSION, config.meta_flac, config.meta_mp3, config.sort);
 	
-	if (R_FAILED(ret = FS_WriteFile("ux0:data/elevenmpv/config.cfg", buf, len))) {
+	if (R_FAILED(ret = FS_WriteFile("ux0:data/ElevenMPV/config.cfg", buf, len))) {
 		free(buf);
 		return ret;
 	}
@@ -36,7 +36,7 @@ int Config_Save(config_t config) {
 int Config_Load(void) {
 	int ret = 0;
 	
-	if (!FS_FileExists("ux0:data/elevenmpv/config.cfg")) {
+	if (!FS_FileExists("ux0:data/ElevenMPV/config.cfg")) {
 		// set these to the following by default:
 		config.meta_flac = SCE_FALSE;
 		config.meta_mp3 = SCE_FALSE;
@@ -45,10 +45,10 @@ int Config_Load(void) {
 	}
 
 	SceOff size = 0;
-	FS_GetFileSize("ux0:data/elevenmpv/config.cfg", &size);
+	FS_GetFileSize("ux0:data/ElevenMPV/config.cfg", &size);
 	char *buf = malloc(size + 1);
 
-	if (R_FAILED(ret = FS_ReadFile("ux0:data/elevenmpv/config.cfg", buf, size))) {
+	if (R_FAILED(ret = FS_ReadFile("ux0:data/ElevenMPV/config.cfg", buf, size))) {
 		free(buf);
 		return ret;
 	}
@@ -59,7 +59,7 @@ int Config_Load(void) {
 
 	// Delete config file if config file is updated. This will rarely happen.
 	if (config_version_holder  < CONFIG_VERSION) {
-		sceIoRemove("ux0:data/elevenmpv/config.cfg");
+		sceIoRemove("ux0:data/ElevenMPV/config.cfg");
 		config.meta_flac = SCE_FALSE;
 		config.meta_mp3 = SCE_FALSE;
 		config.sort = 0;
@@ -72,17 +72,17 @@ int Config_Load(void) {
 int Config_GetLastDirectory(void) {
 	int ret = 0;
 	
-	if (!FS_FileExists("ux0:data/elevenmpv/lastdir.txt")) {
-		FS_WriteFile("ux0:data/elevenmpv/lastdir.txt", ROOT_PATH, strlen(ROOT_PATH) + 1);
+	if (!FS_FileExists("ux0:data/ElevenMPV/lastdir.txt")) {
+		FS_WriteFile("ux0:data/ElevenMPV/lastdir.txt", ROOT_PATH, strlen(ROOT_PATH) + 1);
 		strcpy(cwd, ROOT_PATH); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
 	}
 	else {
 		SceOff size = 0;
 
-		FS_GetFileSize("ux0:data/elevenmpv/lastdir.txt", &size);
+		FS_GetFileSize("ux0:data/ElevenMPV/lastdir.txt", &size);
 		char *buf = malloc(size + 1);
 
-		if (R_FAILED(ret = FS_ReadFile("ux0:data/elevenmpv/lastdir.txt", buf, size))) {
+		if (R_FAILED(ret = FS_ReadFile("ux0:data/ElevenMPV/lastdir.txt", buf, size))) {
 			free(buf);
 			return ret;
 		}

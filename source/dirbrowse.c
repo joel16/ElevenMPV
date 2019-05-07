@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "common.h"
+#include "config.h"
 #include "dirbrowse.h"
 #include "fs.h"
 #include "menu_audioplayer.h"
@@ -29,6 +30,28 @@ static void Dirbrowse_SaveLastDirectory(void) {
 	free(buf);
 }
 
+static int cmpstringp(const void *p1, const void *p2) {
+	SceIoDirent *entryA = (SceIoDirent *)p1;
+	SceIoDirent *entryB = (SceIoDirent *)p2;
+
+	if ((SCE_S_ISDIR(entryA->d_stat.st_mode)) && !(SCE_S_ISDIR(entryB->d_stat.st_mode)))
+		return -1;
+	else if (!(SCE_S_ISDIR(entryA->d_stat.st_mode)) && (SCE_S_ISDIR(entryB->d_stat.st_mode)))
+		return 1;
+	else {
+		if (config.sort == 0) // Sort alphabetically (ascending - A to Z)
+			return strcasecmp(entryA->d_name, entryB->d_name);
+		else if (config.sort == 1) // Sort alphabetically (descending - Z to A)
+			return strcasecmp(entryB->d_name, entryA->d_name);
+		else if (config.sort == 2) // Sort by file size (largest first)
+			return entryA->d_stat.st_size > entryB->d_stat.st_size ? -1 : entryA->d_stat.st_size < entryB->d_stat.st_size ? 1 : 0;
+		else if (config.sort == 3) // Sort by file size (smallest first)
+			return entryB->d_stat.st_size > entryA->d_stat.st_size ? -1 : entryB->d_stat.st_size < entryA->d_stat.st_size ? 1 : 0;
+	}
+
+	return 0;
+}
+
 int Dirbrowse_PopulateFiles(SceBool refresh) {
 	SceUID dir = 0;
 	Dirbrowse_RecursiveFree(files);
@@ -43,7 +66,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 			entryCount++;
 
 		sceIoDclose(dir);
-		qsort(entries, entryCount, sizeof(SceIoDirent), Utils_Alphasort);
+		qsort(entries, entryCount, sizeof(SceIoDirent), cmpstringp);
 
 		for (i = 0; i < entryCount; i++) {
 			// Ingore null filename
@@ -102,6 +125,9 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 
 void Dirbrowse_DisplayFiles(void) {
 	vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 25, cwd);
+
+	if (!(!strcmp(cwd, ROOT_PATH)))
+		vita2d_draw_texture(icon_back, 25, 54);
 
 	int i = 0, printed = 0;
 	File *file = files; // Draw file list

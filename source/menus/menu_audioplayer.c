@@ -147,7 +147,7 @@ void Menu_PlayAudio(char *path) {
 
 		vita2d_draw_texture(default_artwork_blur, 0, 0);
 		vita2d_draw_rectangle(0, 0, 960, 40, RGBA8(97, 97, 97, 255));
-		vita2d_draw_texture(icon_back, 10, 57);
+		vita2d_draw_texture(icon_back, 10, 60);
 		StatusBar_Display();
 
 		if ((metadata.has_meta) && (metadata.title[0] != '\0') && (metadata.artist[0] != '\0')) {

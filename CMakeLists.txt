@@ -75,8 +75,9 @@ add_executable(${PROJECT_NAME}
   source/audio/vitaaudiolib.c
   source/audio/wav.c
   source/audio/xm.c
-  source/menus/menu_displayfiles.c
   source/menus/menu_audioplayer.c
+  source/menus/menu_displayfiles.c
+  source/menus/menu_settings.c
 )
 
 target_link_libraries(${PROJECT_NAME}

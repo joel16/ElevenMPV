@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "audio.h"
+#include "config.h"
 
 // For MP3 ID3 tags
 struct genre {
@@ -142,18 +143,20 @@ int MP3_Init(const char *path) {
 		if (v2 != NULL) {
 			print_v2(&metadata, v2);
 
-			for (size_t count = 0; count < v2->pictures; count++) {
-				mpg123_picture *pic = &v2->picture[count];
-				char *str = pic->mime_type.p;
+			if (config.meta_mp3) {
+				for (size_t count = 0; count < v2->pictures; count++) {
+					mpg123_picture *pic = &v2->picture[count];
+					char *str = pic->mime_type.p;
 
-				if ((pic->type == 3 ) || (pic->type == 0)) {
-					if ((!strcasecmp(str, "image/jpg")) || (!strcasecmp(str, "image/jpeg"))) {
-						metadata.cover_image = vita2d_load_JPEG_buffer(pic->data, pic->size);
-						break;
-					}
-					else if (!strcasecmp(str, "image/png")) {
-						metadata.cover_image = vita2d_load_PNG_buffer(pic->data);
-						break;
+					if ((pic->type == 3 ) || (pic->type == 0)) {
+						if ((!strcasecmp(str, "image/jpg")) || (!strcasecmp(str, "image/jpeg"))) {
+							metadata.cover_image = vita2d_load_JPEG_buffer(pic->data, pic->size);
+							break;
+						}
+						else if (!strcasecmp(str, "image/png")) {
+							metadata.cover_image = vita2d_load_PNG_buffer(pic->data);
+							break;
+						}
 					}
 				}
 			}

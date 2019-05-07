@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "dirbrowse.h"
+#include "menu_settings.h"
 #include "status_bar.h"
 #include "textures.h"
 #include "utils.h"
@@ -49,6 +50,9 @@ void Menu_DisplayFiles(void) {
 
 		Utils_ReadControls();
 		Menu_HandleControls();
+
+		if (pressed & SCE_CTRL_SELECT)
+			Menu_DisplaySettings();
 
 		if (pressed & SCE_CTRL_START)
 			break;

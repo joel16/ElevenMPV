@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 	font = vita2d_load_font_file("app0:Roboto-Regular.ttf");
 	Textures_Load();
 
-	sceIoMkdir("ux0:data/elevenmpv", 0777);
+	sceIoMkdir("ux0:data/ElevenMPV", 0777);
 	Config_Load();
 	Config_GetLastDirectory();
 
