@@ -11,7 +11,7 @@ typedef struct {
     char title[31];
     char album[31];
     char artist[31];
-    char year[5];
+    char year[11];
     char comment[31];
     char genre[31];
     vita2d_texture *cover_image;
