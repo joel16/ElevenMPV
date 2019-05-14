@@ -169,6 +169,15 @@ void Menu_PlayAudio(char *path) {
 		vita2d_draw_rectangle(410, 124, 550, 400, RGBA8(45, 48, 50, 255)); // Draw info box (outer)
 		vita2d_draw_rectangle(420, 134, 530, 380, RGBA8(46, 49, 51, 255)); // Draw info box (inner)
 
+		if ((metadata.has_meta) && (metadata.album[0] != '\0'))
+			vita2d_font_draw_textf(font, 425, 155, RGBA8(255, 255, 255, 255), 25, "Album: %s\n", metadata.album);
+
+		if ((metadata.has_meta) && (metadata.year[0] != '\0'))
+			vita2d_font_draw_textf(font, 425, 185, RGBA8(255, 255, 255, 255), 25, "Year: %s\n", metadata.year);
+
+		if ((metadata.has_meta) && (metadata.genre[0] != '\0'))
+			vita2d_font_draw_textf(font, 425, 215, RGBA8(255, 255, 255, 255), 25, "Genre: %s\n", metadata.genre);
+
 		if (!Audio_IsPaused())
 			vita2d_draw_texture(btn_pause, 410 + ((550 - BUTTON_WIDTH) / 2), 124 + ((400 - BUTTON_HEIGHT) / 2)); // Playing
 		else
