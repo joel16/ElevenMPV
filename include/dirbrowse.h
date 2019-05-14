@@ -5,7 +5,7 @@
 
 typedef struct File {
 	struct File *next; // Next item
-	int is_dir;        // Folder flag
+	SceBool is_dir;        // Folder flag
 	char name[256];    // File name
 	char ext[5];       // File extension
 } File;

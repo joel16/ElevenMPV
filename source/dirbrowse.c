@@ -58,8 +58,10 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 	files = NULL;
 	file_count = 0;
 
+	SceBool parent_dir_set = SCE_FALSE;
+
 	if (R_SUCCEEDED(dir = sceIoDopen(cwd))) {
-		int entryCount = 0, i = 0;
+		int entryCount = 0;
 		SceIoDirent *entries = (SceIoDirent *)calloc(MAX_FILES, sizeof(SceIoDirent));
 
 		while (sceIoDread(dir, &entries[entryCount]) > 0)
@@ -68,28 +70,28 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 		sceIoDclose(dir);
 		qsort(entries, entryCount, sizeof(SceIoDirent), cmpstringp);
 
-		for (i = 0; i < entryCount; i++) {
-			// Ingore null filename
-			if (entries[i].d_name[0] == '\0') 
-				continue;
-
-			// Ignore "." in all directories
-			if (!strcmp(entries[i].d_name, ".")) 
-				continue;
-
-			// Ignore ".." in Root Directory
-			if ((!strcmp(cwd, ROOT_PATH)) && (!strncmp(entries[i].d_name, "..", 2))) // Ignore ".." in Root Directory
-				continue;
-
+		for (int i = -1; i < entryCount; i++) {
 			// Allocate Memory
 			File *item = (File *)malloc(sizeof(File));
 			memset(item, 0, sizeof(File));
 
-			item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
+			if ((strcmp(cwd, ROOT_PATH)) && (i == -1) && (!parent_dir_set)) {
+				strcpy(item->name, "..");
+				item->is_dir = SCE_TRUE;
+				parent_dir_set = SCE_TRUE;
+				file_count++;
+			}
+			else {
+				if ((i == -1) && (!(strcmp(cwd, ROOT_PATH))))
+					continue;
 
-			// Copy File Name
-			strcpy(item->name, entries[i].d_name);
-			strcpy(item->ext, FS_GetFileExt(item->name));
+				item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
+
+				// Copy File Name
+				strcpy(item->name, entries[i].d_name);
+				strcpy(item->ext, FS_GetFileExt(item->name));
+				file_count++;
+			}
 
 			// New List
 			if (files == NULL) 
@@ -104,8 +106,6 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 
 				list->next = item;
 			}
-
-			file_count++;
 		}
 
 		free(entries);

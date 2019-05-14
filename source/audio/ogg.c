@@ -4,7 +4,7 @@
 #include <vorbis/vorbisfile.h>
 
 #include "audio.h"
-#include "utils.h"
+#include "common.h"
 
 static OggVorbis_File ogg;
 static SceUID ogg_file = 0;
