@@ -6,7 +6,75 @@
 static drflac *flac;
 static drflac_uint64 frames_read = 0;
 
+static void FLAC_ReadTagData(char *source, char *dest) {
+	int count = 0, i = 0;
+	strcpy(dest, "");
+
+	for (i = 0; i < strlen(source); i++) {
+		if ((unsigned char)source[i] >= 0x20 && (unsigned char)source[i] <= 0xfd) {
+			dest[count] = source[i];
+			if (++count >= 256)
+				break;
+		}
+	}
+
+	dest[count] = '\0';
+}
+
+static void FLAC_SplitVorbisComments(char *comment, char *name, char *value){
+	char *result = NULL;
+	result = strtok(comment, "=");
+	int count = 0;
+
+	while(result != NULL && count < 2) {
+		if (strlen(result) > 0) {
+			switch (count){
+				case 0:
+					strncpy(name, result, 30);
+					name[30] = '\0';
+					break;
+
+				case 1:
+					FLAC_ReadTagData(result, value);
+					value[256] = '\0';
+					break;
+			}
+
+			count++;
+		}
+
+		result = strtok(NULL, "=");
+	}
+}
+
 static void FLAC_MetaCallback(void *pUserData, drflac_metadata *pMetadata) {
+	char tag[32];
+	char value[31];
+
+	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_VORBIS_COMMENT) {
+		drflac_vorbis_comment_iterator iterator;
+		drflac_uint32 comment_length;
+		const char *comment_str;
+
+		drflac_init_vorbis_comment_iterator(&iterator, pMetadata->data.vorbis_comment.commentCount, pMetadata->data.vorbis_comment.pComments);
+
+		while((comment_str = drflac_next_vorbis_comment(&iterator, &comment_length)) != NULL) {
+			FLAC_SplitVorbisComments((char *)comment_str, tag, value);
+			if (!strcasecmp(tag, "title"))
+				snprintf(metadata.title, 32, "%s\n", value);
+			if (!strcasecmp(tag, "album"))
+				snprintf(metadata.album, 32, "%s\n", value);
+			if (!strcasecmp(tag, "artist"))
+				snprintf(metadata.artist, 32, "%s\n", value);
+			if (!strcasecmp(tag, "year"))
+				snprintf(metadata.year, 32, "%s\n", value);
+			if (!strcasecmp(tag, "comment"))
+				snprintf(metadata.comment, 32, "%s\n", value);
+			if (!strcasecmp(tag, "genre"))
+				snprintf(metadata.genre, 32, "%s\n", value);
+		}
+	}
+
 	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE) {
 		if (pMetadata->data.picture.type == DRFLAC_PICTURE_TYPE_COVER_FRONT) {
 			metadata.has_meta = SCE_TRUE;

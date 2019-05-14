@@ -8,12 +8,12 @@ extern SceBool playing, paused;
 
 typedef struct {
 	SceBool has_meta;
-    char title[31];
-    char album[31];
-    char artist[31];
-    char year[11];
-    char comment[31];
-    char genre[31];
+    char title[32];
+    char album[32];
+    char artist[32];
+    char year[32];
+    char comment[32];
+    char genre[32];
     vita2d_texture *cover_image;
 } Audio_Metadata;
 
