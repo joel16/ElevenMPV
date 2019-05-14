@@ -15,7 +15,7 @@ set(VITA_APP_NAME "Eleven Music Player")
 set(VITA_TITLEID  "ELEVENMPV")
 set(VITA_VERSION  "01.10")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall -Werror -ffast-math")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall -Werror")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(VITA_MKSFOEX_FLAGS "${VITA_MKSFOEX_FLAGS} -d PARENTAL_LEVEL=1")
 
@@ -71,7 +71,6 @@ add_executable(${PROJECT_NAME}
   source/audio/mp3.c
   source/audio/ogg.c
   source/audio/opus.c
-  source/audio/stb_vorbis.c
   source/audio/vitaaudiolib.c
   source/audio/wav.c
   source/audio/xm.c
@@ -89,6 +88,8 @@ target_link_libraries(${PROJECT_NAME}
   c
   opusfile
   opus
+  vorbisfile
+  vorbis
   ogg
   xmp-lite
   m
