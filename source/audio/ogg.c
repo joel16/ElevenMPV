@@ -1,21 +1,46 @@
-#include <stdio.h>
+#include <psp2/io/fcntl.h>
 #include <string.h>
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
 #include "audio.h"
+#include "utils.h"
 
 static OggVorbis_File ogg;
-static FILE *ogg_file = NULL;
+static SceUID ogg_file = 0;
 static vorbis_info *ogg_info = NULL;
 static ogg_int64_t samples_read = 0, max_lenth = 0;
 
+size_t ogg_callback_read(void *ptr, size_t size, size_t count, void *stream) {
+	return sceIoRead(*(SceUID *)stream, ptr, size * count);
+}
+
+int ogg_callback_seek(void *stream, ogg_int64_t offset, int whence) {
+	return sceIoLseek32(*(SceUID *)stream, (unsigned int) offset, whence);
+}
+
+int ogg_callback_close(void *stream) {
+	return sceIoClose(*(SceUID *)stream);
+}
+
+long ogg_callback_tell(void *stream) {
+	return sceIoLseek32(*(SceUID *)stream, 0, SEEK_CUR);
+}
+
 int OGG_Init(const char *path) {
-	if ((ogg_file = fopen(path, "rb")) == NULL)
+	if (R_FAILED(ogg_file = sceIoOpen(path, SCE_O_RDONLY, 0777)))
 		return -1;
 
-	if (ov_open(ogg_file, &ogg, NULL, 0) < 0)
+	ov_callbacks ogg_callbacks;
+	ogg_callbacks.read_func = ogg_callback_read;
+	ogg_callbacks.seek_func = ogg_callback_seek;
+	ogg_callbacks.close_func = ogg_callback_close;
+	ogg_callbacks.tell_func = ogg_callback_tell;
+
+	if (R_FAILED(ov_open_callbacks(&ogg_file, &ogg, NULL, 0, ogg_callbacks))) {
+		sceIoClose(ogg_file);
 		return -1;
+	}
 
 	if ((ogg_info = ov_info(&ogg, -1)) == NULL)
 		return -1;
@@ -102,4 +127,5 @@ void OGG_Term(void) {
         metadata.has_meta = SCE_FALSE;
 
 	ov_clear(&ogg);
+	sceIoClose(ogg_file);
 }
