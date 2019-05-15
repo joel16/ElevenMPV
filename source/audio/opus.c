@@ -1,6 +1,7 @@
 #include <string.h>
 
 #include "audio.h"
+#include "config.h"
 #include "opusfile.h"
 
 static OggOpusFile *opus;
@@ -49,7 +50,7 @@ int OPUS_Init(const char *path) {
 		snprintf(metadata.genre, 31, "%s\n", opus_tags_query(tags, "genre", 0));
 	}
 
-	if (opus_tags_query_count(tags, "METADATA_BLOCK_PICTURE") > 0) {
+	if ((opus_tags_query_count(tags, "METADATA_BLOCK_PICTURE") > 0) && (config.meta_opus)) {
 		metadata.has_meta = SCE_TRUE;
 
 		OpusPictureTag picture_tag = { 0 };

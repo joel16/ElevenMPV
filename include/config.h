@@ -6,6 +6,7 @@
 typedef struct {
 	SceBool meta_flac;
 	SceBool meta_mp3;
+	SceBool meta_opus;
 	int sort;
 } config_t;
 

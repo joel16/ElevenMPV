@@ -54,12 +54,15 @@ static void FLAC_MetaCallback(void *pUserData, drflac_metadata *pMetadata) {
 	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_VORBIS_COMMENT) {
 		drflac_vorbis_comment_iterator iterator;
 		drflac_uint32 comment_length;
-		const char *comment_str;
+		const char *const_comment_str;
+		char *comment_str;
 
 		drflac_init_vorbis_comment_iterator(&iterator, pMetadata->data.vorbis_comment.commentCount, pMetadata->data.vorbis_comment.pComments);
 
-		while((comment_str = drflac_next_vorbis_comment(&iterator, &comment_length)) != NULL) {
-			FLAC_SplitVorbisComments((char *)comment_str, tag, value);
+		while((const_comment_str = drflac_next_vorbis_comment(&iterator, &comment_length)) != NULL) {
+			comment_str = strdup(const_comment_str);
+			FLAC_SplitVorbisComments(comment_str, tag, value);
+			
 			if (!strcasecmp(tag, "title"))
 				snprintf(metadata.title, 32, "%s\n", value);
 			if (!strcasecmp(tag, "album"))

@@ -73,11 +73,12 @@ static void Menu_DisplaySortSettings(void) {
 }
 
 static void Menu_DisplayMetadataSettings(void) {
-	int selection = 0, max_items = 1;
+	int selection = 0, max_items = 2;
 
 	const char *menu_items[] = {
 		"Enable FLAC metadata",
-		"Enable MP3 metadata"
+		"Enable MP3 metadata",
+		"Enable OPUS metadata"
 	};
 
 	while (SCE_TRUE) {
@@ -109,6 +110,7 @@ static void Menu_DisplayMetadataSettings(void) {
 
 		vita2d_draw_texture(config.meta_flac == SCE_TRUE? toggle_on : toggle_off, 850, 118);
 		vita2d_draw_texture(config.meta_mp3 == SCE_TRUE? toggle_on : toggle_off, 850, 190);
+		vita2d_draw_texture(config.meta_opus == SCE_TRUE? toggle_on : toggle_off, 850, 262);
 
 		vita2d_end_drawing();
 		vita2d_swap_buffers();
@@ -132,8 +134,14 @@ static void Menu_DisplayMetadataSettings(void) {
 					config.meta_flac = !config.meta_flac;
 					Config_Save(config);
 					break;
+
 				case 1:
 					config.meta_mp3 = !config.meta_mp3;
+					Config_Save(config);
+					break;
+
+				case 2:
+					config.meta_opus = !config.meta_opus;
 					Config_Save(config);
 					break;
 			}
@@ -146,12 +154,11 @@ static void Menu_DisplayMetadataSettings(void) {
 }*/
 
 void Menu_DisplaySettings(void) {
-	int selection = 0, max_items = 2;
+	int selection = 0, max_items = 1;
 
 	const char *menu_items[] = {
 		"Sort settings",
-		"Metadata settings",
-		"About"
+		"Metadata settings"
 	};
 
 	while (SCE_TRUE) {
@@ -204,8 +211,6 @@ void Menu_DisplaySettings(void) {
 					break;
 				case 1:
 					Menu_DisplayMetadataSettings();
-					break;
-				case 2:
 					break;
 			}
 		}
