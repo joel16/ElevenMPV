@@ -24,7 +24,8 @@ enum Audio_FileType {
 };
 
 static enum Audio_FileType file_type = FILE_TYPE_NONE;
-Audio_Metadata metadata;
+Audio_Metadata metadata = {0};
+static Audio_Metadata empty = {0};
 SceBool playing = SCE_TRUE, paused = SCE_FALSE;
 
 static SceUInt32 Audio_GetSampleRate(void) {
@@ -139,10 +140,6 @@ static void Audio_Decode(void *buf, unsigned int length, void *userdata) {
 int Audio_Init(const char *path) {
 	playing = SCE_TRUE;
 	paused = SCE_FALSE;
-
-	// Clear struct
-	static const Audio_Metadata empty;
-	metadata = empty;
 
 	if (!strncasecmp(FS_GetFileExt(path), "flac", 4))
 		file_type = FILE_TYPE_FLAC;
@@ -314,6 +311,9 @@ void Audio_Term(void) {
 
 	playing = SCE_TRUE;
 	paused = SCE_FALSE;
+
+	// Clear metadata struct
+	metadata = empty;
 
 	vitaAudioSetChannelCallback(0, NULL, NULL); // Clear channel callback
 	vitaAudioEndPre();
