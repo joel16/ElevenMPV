@@ -9,6 +9,7 @@ SceUInt8 WAV_GetChannels(void);
 void WAV_Decode(void *buf, unsigned int length, void *userdata);
 SceUInt64 WAV_GetPosition(void);
 SceUInt64 WAV_GetLength(void);
+SceUInt64 WAV_Seek(SceUInt64 index);
 void WAV_Term(void);
 
 #endif

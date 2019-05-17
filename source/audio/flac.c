@@ -109,7 +109,7 @@ SceUInt8 FLAC_GetChannels(void) {
 void FLAC_Decode(void *buf, unsigned int length, void *userdata) {
 	frames_read += drflac_read_pcm_frames_s16(flac, (drflac_uint64)length, (drflac_int16 *)buf);
 	
-	if (frames_read == flac->totalPCMFrameCount)
+	if (frames_read >= flac->totalPCMFrameCount)
 		playing = SCE_FALSE;
 }
 
@@ -119,6 +119,17 @@ SceUInt64 FLAC_GetPosition(void) {
 
 SceUInt64 FLAC_GetLength(void) {
 	return flac->totalPCMFrameCount;
+}
+
+SceUInt64 FLAC_Seek(SceUInt64 index) {
+	drflac_uint64 seek_frame = (flac->totalPCMFrameCount * (index / 450.0));
+	
+	if (drflac_seek_to_pcm_frame(flac, seek_frame) == DRFLAC_TRUE) {
+		frames_read = seek_frame;
+		return frames_read;
+	}
+
+	return -1;
 }
 
 void FLAC_Term(void) {

@@ -217,6 +217,18 @@ void Menu_PlayAudio(char *path) {
 		if (pressed & SCE_CTRL_ENTER)
 			Audio_Pause();
 
+		if (Touch_CheckHeld() && Touch_GetX() >= 460 && Touch_GetX() <= 910 && Touch_GetY() >= 480 && Touch_GetY() <= 505) {
+			// Pause first if not paused.
+			if (!Audio_IsPaused())
+				Audio_Pause();
+
+			Audio_Seek(Touch_GetX() - 460);
+
+			// Unpause.
+			if (Audio_IsPaused())
+				Audio_Pause();
+		}
+
 		if (pressed & SCE_CTRL_TRIANGLE) {
 			if (state == MUSIC_STATE_SHUFFLE)
 				state = MUSIC_STATE_NONE;

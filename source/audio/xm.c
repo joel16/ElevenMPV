@@ -10,7 +10,9 @@ static SceUInt64 samples_read = 0, total_samples = 0;
 
 int XM_Init(const char *path) {
 	xmp = xmp_create_context();
-	if (xmp_load_module(xmp, (char *)path) < 0)
+	char *xmp_path = strdup(path);
+
+	if (xmp_load_module(xmp, xmp_path) < 0)
 		return -1;
 
 	xmp_start_player(xmp, 44100, 0);
@@ -38,7 +40,7 @@ void XM_Decode(void *buf, unsigned int length, void *userdata) {
 	xmp_play_buffer(xmp, buf, (int)length * (sizeof(SceInt16) * 2), 0);
 	samples_read += length;
 
-	if (samples_read == total_samples)
+	if (samples_read >= total_samples)
 		playing = SCE_FALSE;
 }
 
@@ -48,6 +50,17 @@ SceUInt64 XM_GetPosition(void) {
 
 SceUInt64 XM_GetLength(void) {
 	return total_samples;
+}
+
+SceUInt64 XM_Seek(SceUInt64 index) {
+	int seek_sample = (total_samples * (index / 450.0));
+	
+	if (xmp_seek_time(xmp, seek_sample/44.1) >= 0) {
+		samples_read = seek_sample;
+		return samples_read;
+	}
+
+	return -1;
 }
 
 void XM_Term(void) {

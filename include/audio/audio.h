@@ -27,6 +27,7 @@ SceUInt64 Audio_GetPosition(void);
 SceUInt64 Audio_GetLength(void);
 SceUInt64 Audio_GetPositionSeconds(void);
 SceUInt64 Audio_GetLengthSeconds(void);
+void Audio_Seek(SceUInt64 index);
 void Audio_Term(void);
 
 #endif

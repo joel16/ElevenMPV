@@ -9,6 +9,7 @@ SceUInt8 MP3_GetChannels(void);
 void MP3_Decode(void *buf, unsigned int length, void *userdata);
 SceUInt64 MP3_GetPosition(void);
 SceUInt64 MP3_GetLength(void);
+SceUInt64 MP3_Seek(SceUInt64 index);
 void MP3_Term(void);
 
 #endif

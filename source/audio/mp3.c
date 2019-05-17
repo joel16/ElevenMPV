@@ -123,6 +123,15 @@ int MP3_Init(const char *path) {
 	if (error != MPG123_OK)
 		return error;
 
+	error = mpg123_param(mp3, MPG123_FLAGS, MPG123_FORCE_SEEKABLE | MPG123_FUZZY | MPG123_SEEKBUFFER | MPG123_GAPLESS, 0.0);
+	if (error != MPG123_OK)
+		return error;
+
+	// Let the seek index auto-grow and contain an entry for every frame
+	error = mpg123_param(mp3, MPG123_INDEX_SIZE, -1, 0.0);
+	if (error != MPG123_OK)
+		return error;
+
 	error = mpg123_param(mp3, MPG123_ADD_FLAGS, MPG123_PICTURE, 0.0);
 	if (error != MPG123_OK)
 		return error;
@@ -163,15 +172,16 @@ int MP3_Init(const char *path) {
 		}
 	}
 
-	total_samples = mpg123_length(mp3);
 	mpg123_getformat(mp3, &sample_rate, &channels, NULL);
 	mpg123_format_none(mp3);
-	mpg123_format(mp3, sample_rate, channels, MPG123_ENC_SIGNED_16);
+	mpg123_format(mp3, 44100, channels, MPG123_ENC_SIGNED_16);
+
+	total_samples = mpg123_length(mp3);
 	return 0;
 }
 
 SceUInt32 MP3_GetSampleRate(void) {
-	return sample_rate;
+	return 44100;
 }
 
 SceUInt8 MP3_GetChannels(void) {
@@ -183,7 +193,7 @@ void MP3_Decode(void *buf, unsigned int length, void *userdata) {
 	mpg123_read(mp3, buf, length * (sizeof(SceInt16) * 2), &done);
 	frames_read += done/(sizeof(SceInt16) * 2);
 
-	if (frames_read == total_samples)
+	if (frames_read >= total_samples)
 		playing = SCE_FALSE;
 }
 
@@ -193,6 +203,17 @@ SceUInt64 MP3_GetPosition(void) {
 
 SceUInt64 MP3_GetLength(void) {
 	return total_samples;
+}
+
+SceUInt64 MP3_Seek(SceUInt64 index) {
+	off_t seek_frame = (total_samples * (index / 450.0));
+	
+	if (mpg123_seek(mp3, seek_frame, SEEK_SET) >= 0) {
+		frames_read = seek_frame;
+		return frames_read;
+	}
+
+	return -1;
 }
 
 void MP3_Term(void) {

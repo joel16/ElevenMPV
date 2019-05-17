@@ -108,7 +108,7 @@ void OGG_Decode(void *buf, unsigned int length, void *userdata) {
 	OGG_FillBuffer((char *)buf);
 	samples_read = ov_pcm_tell(&ogg);
 
-	if (samples_read == max_lenth)
+	if (samples_read >= max_lenth)
 		playing = SCE_FALSE;
 }
 
@@ -118,6 +118,17 @@ SceUInt64 OGG_GetPosition(void) {
 
 SceUInt64 OGG_GetLength(void) {
 	return max_lenth;
+}
+
+SceUInt64 OGG_Seek(SceUInt64 index) {
+	ogg_int64_t seek_sample = (max_lenth * (index / 450.0));
+	
+	if (ov_pcm_seek(&ogg, seek_sample) >= 0) {
+		samples_read = seek_sample;
+		return samples_read;
+	}
+
+	return -1;
 }
 
 void OGG_Term(void) {
