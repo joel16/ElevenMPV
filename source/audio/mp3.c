@@ -90,7 +90,7 @@ static void print_lines(char *data, const char *prefix, mpg123_string *inlines) 
 				if (data == NULL)
 					printf("%s%s\n", prefix, line);
 				else
-					snprintf(data, 0x1F, "%s%s\n", prefix, line);
+					snprintf(data, 64, "%s%s\n", prefix, line);
 				line = NULL;
 				lines[i] = save;
 			}
