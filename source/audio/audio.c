@@ -293,9 +293,9 @@ void Audio_Seek(SceUInt64 index) {
 			OGG_Seek(index);
 			break;
 
-		case FILE_TYPE_OPUS:
+		/*case FILE_TYPE_OPUS:
 			OPUS_Seek(index);
-			break;
+			break;*/
 
 		case FILE_TYPE_WAV:
 			WAV_Seek(index);
@@ -348,6 +348,6 @@ void Audio_Term(void) {
 
 	vitaAudioSetChannelCallback(0, NULL, NULL); // Clear channel callback
 	vitaAudioEndPre();
-	sceKernelDelayThread(50 * 1000);
+	sceKernelDelayThread(100 * 1000);
 	vitaAudioEnd();
 }
