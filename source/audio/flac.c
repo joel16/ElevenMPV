@@ -59,16 +59,19 @@ int FLAC_Init(const char *path) {
 		(unsigned)(-1), (unsigned)(-1))) {
 		metadata.has_meta = SCE_TRUE;
 		metadata.cover_image = vita2d_load_JPEG_buffer(picture->data.picture.data, picture->length);
+		FLAC__metadata_object_delete(picture);
 	}
 	else if (config.meta_flac && FLAC__metadata_get_picture(path, &picture, FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER, "image/jpeg", NULL, (unsigned)(-1), (unsigned)(-1),
 		(unsigned)(-1), (unsigned)(-1))) {
 		metadata.has_meta = SCE_TRUE;
 		metadata.cover_image = vita2d_load_JPEG_buffer(picture->data.picture.data, picture->length);
+		FLAC__metadata_object_delete(picture);
 	}
 	else if (config.meta_flac && FLAC__metadata_get_picture(path, &picture, FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER, "image/png", NULL, (unsigned)(-1), (unsigned)(-1),
 		(unsigned)(-1), (unsigned)(-1))) {
 		metadata.has_meta = SCE_TRUE;
 		metadata.cover_image = vita2d_load_PNG_buffer(picture->data.picture.data);
+		FLAC__metadata_object_delete(picture);
 	}
 
 	return 0;
