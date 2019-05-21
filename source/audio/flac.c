@@ -1,3 +1,6 @@
+#include <ctype.h>
+#include <FLAC/metadata.h>
+
 #include "audio.h"
 #include "config.h"
 #define DR_FLAC_IMPLEMENTATION
@@ -6,94 +9,67 @@
 static drflac *flac;
 static drflac_uint64 frames_read = 0;
 
-static void FLAC_ReadTagData(char *source, char *dest) {
-	int count = 0, i = 0;
-	strcpy(dest, "");
-
-	for (i = 0; i < strlen(source); i++) {
-		if ((unsigned char)source[i] >= 0x20 && (unsigned char)source[i] <= 0xfd) {
-			dest[count] = source[i];
-			if (++count >= 256)
-				break;
-		}
-	}
-
-	dest[count] = '\0';
-}
-
-static void FLAC_SplitVorbisComments(char *comment, char *name, char *value){
-	char *result = NULL;
-	result = strtok(comment, "=");
-	int count = 0;
-
-	while(result != NULL && count < 2) {
-		if (strlen(result) > 0) {
-			switch (count){
-				case 0:
-					strncpy(name, result, 30);
-					name[30] = '\0';
-					break;
-
-				case 1:
-					FLAC_ReadTagData(result, value);
-					value[256] = '\0';
-					break;
-			}
-
-			count++;
-		}
-
-		result = strtok(NULL, "=");
-	}
-}
-
-static void FLAC_MetaCallback(void *pUserData, drflac_metadata *pMetadata) {
-	char tag[32];
-	char value[31];
-
-	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_VORBIS_COMMENT) {
-		drflac_vorbis_comment_iterator iterator;
-		drflac_uint32 comment_length;
-		const char *const_comment_str;
-		char *comment_str;
-
-		drflac_init_vorbis_comment_iterator(&iterator, pMetadata->data.vorbis_comment.commentCount, pMetadata->data.vorbis_comment.pComments);
-
-		while((const_comment_str = drflac_next_vorbis_comment(&iterator, &comment_length)) != NULL) {
-			comment_str = strdup(const_comment_str);
-			FLAC_SplitVorbisComments(comment_str, tag, value);
-			
-			if (!strcasecmp(tag, "title"))
-				snprintf(metadata.title, 32, "%s\n", value);
-			if (!strcasecmp(tag, "album"))
-				snprintf(metadata.album, 32, "%s\n", value);
-			if (!strcasecmp(tag, "artist"))
-				snprintf(metadata.artist, 32, "%s\n", value);
-			if (!strcasecmp(tag, "year"))
-				snprintf(metadata.year, 32, "%s\n", value);
-			if (!strcasecmp(tag, "comment"))
-				snprintf(metadata.comment, 32, "%s\n", value);
-			if (!strcasecmp(tag, "genre"))
-				snprintf(metadata.genre, 32, "%s\n", value);
-		}
-	}
-
-	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE) {
-		if (pMetadata->data.picture.type == DRFLAC_PICTURE_TYPE_COVER_FRONT) {
-			metadata.has_meta = SCE_TRUE;
-
-			if ((!strcasecmp(pMetadata->data.picture.mime, "image/jpg")) || (!strcasecmp(pMetadata->data.picture.mime, "image/jpeg")))
-				metadata.cover_image = vita2d_load_JPEG_buffer((drflac_uint8 *)pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize);
-			else if (!strcasecmp(pMetadata->data.picture.mime, "image/png"))
-				metadata.cover_image = vita2d_load_PNG_buffer((drflac_uint8 *)pMetadata->data.picture.pPictureData);
-		}
-	}
-}
-
 int FLAC_Init(const char *path) {
-	flac = config.meta_flac? drflac_open_file_with_metadata(path, FLAC_MetaCallback, NULL) : drflac_open_file(path);
+	flac = drflac_open_file(path);
 	if (flac == NULL)
 		return -1;
+
+	FLAC__StreamMetadata *tags;
+	if (FLAC__metadata_get_tags(path, &tags)) {
+		for (int i = 0; i < tags->data.vorbis_comment.num_comments; i++)  {
+			char *tag = (char *)tags->data.vorbis_comment.comments[i].entry;
+
+			if (!strncasecmp("TITLE=", tag, 6)) {
+				metadata.has_meta = SCE_TRUE;
+				snprintf(metadata.title, 31, "%s\n", tag + 6);
+			}
+
+			if (!strncasecmp("ALBUM=", tag, 6)) {
+				metadata.has_meta = SCE_TRUE;
+				snprintf(metadata.album, 31, "%s\n", tag + 6);
+			}
+
+			if (!strncasecmp("ARTIST=", tag, 7)) {
+				metadata.has_meta = SCE_TRUE;
+				snprintf(metadata.artist, 31, "%s\n", tag + 7);
+			}
+
+			if (!strncasecmp("DATE=", tag, 5)) {
+				metadata.has_meta = SCE_TRUE;
+				snprintf(metadata.year, 31, "%d\n", atoi(tag + 5));
+			}
+
+			if (!strncasecmp("COMMENT=", tag, 8)) {
+				metadata.has_meta = SCE_TRUE;
+				snprintf(metadata.comment, 31, "%s\n", tag + 8);
+			}
+
+			if (!strncasecmp("GENRE=", tag, 6)) {
+				metadata.has_meta = SCE_TRUE;
+				snprintf(metadata.genre, 31, "%s\n", tag + 6);
+			}
+		}
+	}
+
+	if (tags)
+		FLAC__metadata_object_delete(tags);
+
+	FLAC__StreamMetadata *picture;
+	if (config.meta_flac && FLAC__metadata_get_picture(path, &picture, FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER, "image/jpg", NULL, (unsigned)(-1), (unsigned)(-1),
+		(unsigned)(-1), (unsigned)(-1))) {
+		metadata.has_meta = SCE_TRUE;
+		metadata.cover_image = vita2d_load_JPEG_buffer(picture->data.picture.data, picture->length);
+	}
+	else if (config.meta_flac && FLAC__metadata_get_picture(path, &picture, FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER, "image/jpeg", NULL, (unsigned)(-1), (unsigned)(-1),
+		(unsigned)(-1), (unsigned)(-1))) {
+		metadata.has_meta = SCE_TRUE;
+		metadata.cover_image = vita2d_load_JPEG_buffer(picture->data.picture.data, picture->length);
+	}
+	else if (config.meta_flac && FLAC__metadata_get_picture(path, &picture, FLAC__STREAM_METADATA_PICTURE_TYPE_FRONT_COVER, "image/png", NULL, (unsigned)(-1), (unsigned)(-1),
+		(unsigned)(-1), (unsigned)(-1))) {
+		metadata.has_meta = SCE_TRUE;
+		metadata.cover_image = vita2d_load_PNG_buffer(picture->data.picture.data);
+	}
 
 	return 0;
 }
@@ -139,4 +115,18 @@ void FLAC_Term(void) {
 		metadata.has_meta = SCE_FALSE;
 
 	drflac_close(flac);
+}
+
+// Functions needed for libFLAC
+
+int chmod(const char *pathname, mode_t mode) {
+	return 0;
+}
+
+int chown(const char *path, int owner, int group) {
+	return 0;
+}
+
+int utime(const char *filename, const void *buf) {
+	return 0;
 }

@@ -86,6 +86,7 @@ target_link_libraries(${PROJECT_NAME}
   jpeg
   z
   c
+  FLAC
   opusfile
   opus
   vorbisfile
