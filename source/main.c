@@ -1,3 +1,4 @@
+#include <psp2/appmgr.h>
 #include <psp2/io/stat.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/shellutil.h>
@@ -28,6 +29,8 @@ int main(int argc, char *argv[]) {
 	SCE_CTRL_ENTER = Utils_GetEnterButton();
 	SCE_CTRL_CANCEL = Utils_GetCancelButton();
 
+	sceAppMgrAcquireBgmPort();
+
 	Touch_Init();
 
 	sceShellUtilInitEvents(0);
@@ -39,6 +42,7 @@ int main(int argc, char *argv[]) {
 	sceSysmoduleUnloadModule(SCE_SYSMODULE_MUSIC_EXPORT);
 
 	Touch_Shutdown();
+	sceAppMgrReleaseBgmPort();
 	Utils_TermAppUtil();
 
 	Textures_Free();

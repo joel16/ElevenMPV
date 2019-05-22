@@ -8,6 +8,7 @@ typedef struct {
 	SceBool meta_mp3;
 	SceBool meta_opus;
 	int sort;
+	int alc_mode;
 } config_t;
 
 extern config_t config;

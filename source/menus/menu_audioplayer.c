@@ -1,4 +1,4 @@
-#include <psp2/appmgr.h>
+#include <psp2/audioout.h>
 #include <psp2/io/dirent.h>
 #include <psp2/power.h>
 #include <stdio.h>
@@ -8,6 +8,7 @@
 
 #include "audio.h"
 #include "common.h"
+#include "config.h"
 #include "fs.h"
 #include "menu_displayfiles.h"
 #include "status_bar.h"
@@ -87,6 +88,8 @@ static void Menu_ConvertSecondsToString(char *string, SceUInt64 seconds) {
 
 static void Menu_InitMusic(char *path) {
 	Audio_Init(path);
+	if (sceAudioOutSetAlcMode(config.alc_mode) < 0)
+		return;
 
 	filename = malloc(128);
 	snprintf(filename, 128, Utils_Basename(path));
@@ -138,7 +141,6 @@ void Menu_PlayAudio(char *path) {
 	Menu_GetMusicList();
 	Menu_InitMusic(path);
 
-	sceAppMgrAcquireBgmPort();
 	Utils_LockPower();
 
 	while(SCE_TRUE) {
