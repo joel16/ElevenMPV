@@ -29,11 +29,11 @@ int vitaAudioOutBlocking(unsigned int channel, unsigned int vol1, unsigned int v
 	if (channel >= VITA_NUM_AUDIO_CHANNELS)
 		return(-1);
 
-	if (vol1 > VITA_VOLUME_MAX)
-		vol1 = VITA_VOLUME_MAX;
+	if (vol1 > SCE_AUDIO_OUT_MAX_VOL)
+		vol1 = SCE_AUDIO_OUT_MAX_VOL;
 
-	if (vol2 > VITA_VOLUME_MAX)
-		vol2 = VITA_VOLUME_MAX;
+	if (vol2 > SCE_AUDIO_OUT_MAX_VOL)
+		vol2 = SCE_AUDIO_OUT_MAX_VOL;
 
 	int vol[2] = {vol1, vol2};
 	sceAudioOutSetVolume(vitaAudioStatus[channel].handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
@@ -78,8 +78,8 @@ int vitaAudioInit(int frequency, SceAudioOutMode mode) {
 	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
 		vitaAudioStatus[i].handle = -1;
 		vitaAudioStatus[i].threadhandle = -1;
-		vitaAudioStatus[i].volumeright = VITA_VOLUME_MAX;
-		vitaAudioStatus[i].volumeleft  = VITA_VOLUME_MAX;
+		vitaAudioStatus[i].volumeright = SCE_AUDIO_OUT_MAX_VOL;
+		vitaAudioStatus[i].volumeleft  = SCE_AUDIO_OUT_MAX_VOL;
 		vitaAudioStatus[i].callback = 0;
 		vitaAudioStatus[i].userdata = 0;
 	}
@@ -101,7 +101,6 @@ int vitaAudioInit(int frequency, SceAudioOutMode mode) {
 	}
 
 	audio_ready = 1;
-
 	strcpy(str, "audiot0");
 
 	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {

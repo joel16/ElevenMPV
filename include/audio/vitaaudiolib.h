@@ -9,7 +9,6 @@ extern "C" {
 
 #define VITA_NUM_AUDIO_CHANNELS 1
 #define VITA_NUM_AUDIO_SAMPLES 960
-#define VITA_VOLUME_MAX 0x8000
 
 typedef void (* vitaAudioCallback_t)(void *stream, unsigned int length, void *userdata);
 

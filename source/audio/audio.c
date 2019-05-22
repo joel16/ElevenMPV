@@ -184,7 +184,7 @@ int Audio_Init(const char *path) {
 			break;
 	}
 
-	vitaAudioInit(Audio_GetSampleRate(), Audio_GetChannels() == 2? SCE_AUDIO_OUT_PARAM_FORMAT_S16_STEREO : SCE_AUDIO_OUT_PARAM_FORMAT_S16_MONO);
+	vitaAudioInit(Audio_GetSampleRate(), Audio_GetChannels() == 2? SCE_AUDIO_OUT_MODE_STEREO : SCE_AUDIO_OUT_MODE_MONO);
 	vitaAudioSetChannelCallback(0, Audio_Decode, NULL);
 	return 0;
 }
