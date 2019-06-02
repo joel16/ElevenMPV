@@ -1,3 +1,4 @@
+#include <psp2/io/fcntl.h>
 #include <psp2/kernel/sysmem.h>
 #include <string.h>
 
@@ -72,6 +73,7 @@ static void Menu_DisplayDeviceSettings(void) {
 			Config_Save(config);
 			strcpy(root_path, menu_items[config.device]);
 			strcpy(cwd, root_path);
+			sceIoRemove("ux0:data/ElevenMPV/lastdir.txt");
 			Dirbrowse_PopulateFiles(SCE_TRUE);
 		}
 	}
