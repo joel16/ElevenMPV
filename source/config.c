@@ -18,13 +18,15 @@ const char *config_file =
 	"metadata_mp3 = %d\n"
 	"metadata_opus = %d\n"
 	"sort = %d\n"
-	"alc_mode = %d";
+	"alc_mode = %d\n"
+	"device = %d";
 
 int Config_Save(config_t config) {
 	int ret = 0;
 	
 	char *buf = malloc(128);
-	int len = snprintf(buf, 128, config_file, CONFIG_VERSION, config.meta_flac, config.meta_mp3, config.meta_opus, config.sort, config.alc_mode);
+	int len = snprintf(buf, 128, config_file, CONFIG_VERSION, config.meta_flac, config.meta_mp3, config.meta_opus, config.sort, 
+		config.alc_mode, config.device);
 	
 	if (R_FAILED(ret = FS_WriteFile("ux0:data/ElevenMPV/config.cfg", buf, len))) {
 		free(buf);
@@ -45,6 +47,7 @@ int Config_Load(void) {
 		config.meta_opus = SCE_TRUE;
 		config.sort = 0;
 		config.alc_mode = 0;
+		config.device = 0;
 		return Config_Save(config);
 	}
 
@@ -58,7 +61,8 @@ int Config_Load(void) {
 	}
 
 	buf[size] = '\0';
-	sscanf(buf, config_file, &config_version_holder, &config.meta_flac, &config.meta_mp3, &config.meta_opus, &config.sort, &config.alc_mode);
+	sscanf(buf, config_file, &config_version_holder, &config.meta_flac, &config.meta_mp3, &config.meta_opus, &config.sort, 
+		&config.alc_mode, &config.device);
 	free(buf);
 
 	// Delete config file if config file is updated. This will rarely happen.
@@ -69,6 +73,7 @@ int Config_Load(void) {
 		config.meta_opus = SCE_TRUE;
 		config.sort = 0;
 		config.alc_mode = 0;
+		config.device = 0;
 		return Config_Save(config);
 	}
 
@@ -77,12 +82,19 @@ int Config_Load(void) {
 
 int Config_GetLastDirectory(void) {
 	int ret = 0;
+	const char *root_paths[] = {
+		"ux0:/",
+		"ur0:/",
+		"uma0:/"
+	};
 	
 	if (!FS_FileExists("ux0:data/ElevenMPV/lastdir.txt")) {
-		FS_WriteFile("ux0:data/ElevenMPV/lastdir.txt", ROOT_PATH, strlen(ROOT_PATH) + 1);
-		strcpy(cwd, ROOT_PATH); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
+		snprintf(root_path, 8, "ux0:/");
+		FS_WriteFile("ux0:data/ElevenMPV/lastdir.txt", root_path, strlen(root_path) + 1);
+		strcpy(cwd, root_path); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
 	}
 	else {
+		strcpy(root_path, root_paths[config.device]);
 		SceOff size = 0;
 
 		FS_GetFileSize("ux0:data/ElevenMPV/lastdir.txt", &size);
@@ -100,7 +112,7 @@ int Config_GetLastDirectory(void) {
 		if (FS_DirExists(path)) // Incase a directory previously visited had been deleted, set start path to sdmc:/ to avoid errors.
 			strcpy(cwd, path);
 		else
-			strcpy(cwd, ROOT_PATH);
+			strcpy(cwd, root_path);
 		
 		free(buf);
 	}

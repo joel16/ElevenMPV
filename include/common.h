@@ -12,7 +12,6 @@
 /// Returns the level of a result code.
 
 #define MAX_FILES 1024
-#define ROOT_PATH "ux0:/"
 
 #define FILES_PER_PAGE 6
 
@@ -22,5 +21,6 @@ extern SceUInt32 pressed;
 extern int position;
 extern int file_count;
 extern char cwd[512];
+extern char root_path[8];
 
 #endif

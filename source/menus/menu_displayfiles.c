@@ -26,7 +26,7 @@ static void Menu_HandleControls(void) {
 			Dirbrowse_OpenFile();
 	}
 
-	if ((strcmp(cwd, ROOT_PATH) != 0) && (pressed & SCE_CTRL_CANCEL)) {
+	if ((strcmp(cwd, root_path) != 0) && (pressed & SCE_CTRL_CANCEL)) {
 		Dirbrowse_Navigate(SCE_TRUE);
 		Dirbrowse_PopulateFiles(SCE_TRUE);
 	}

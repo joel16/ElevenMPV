@@ -75,14 +75,14 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 			File *item = (File *)malloc(sizeof(File));
 			memset(item, 0, sizeof(File));
 
-			if ((strcmp(cwd, ROOT_PATH)) && (i == -1) && (!parent_dir_set)) {
+			if ((strcmp(cwd, root_path)) && (i == -1) && (!parent_dir_set)) {
 				strcpy(item->name, "..");
 				item->is_dir = SCE_TRUE;
 				parent_dir_set = SCE_TRUE;
 				file_count++;
 			}
 			else {
-				if ((i == -1) && (!(strcmp(cwd, ROOT_PATH))))
+				if ((i == -1) && (!(strcmp(cwd, root_path))))
 					continue;
 
 				item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
@@ -126,7 +126,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 void Dirbrowse_DisplayFiles(void) {
 	vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 25, cwd);
 
-	if (!(!strcmp(cwd, ROOT_PATH)))
+	if (!(!strcmp(cwd, root_path)))
 		vita2d_draw_texture(icon_back, 25, 54);
 
 	int i = 0, printed = 0;

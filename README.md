@@ -16,7 +16,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 
 # Features:
-- Browse ux0:/ to play the above audio formats.
+- Browse ux0:/, ur0:/ and uma0:/ to play the above audio formats.
 - Pause/Play audio.
 - Shuffle/Repeat audio.
 - Next/Previous track in current working directory.
