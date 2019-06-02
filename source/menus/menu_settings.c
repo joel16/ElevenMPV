@@ -1,18 +1,17 @@
 #include <psp2/io/fcntl.h>
-#include <psp2/kernel/sysmem.h>
 #include <string.h>
 
 #include "config.h"
 #include "common.h"
 #include "dirbrowse.h"
+#include "fs.h"
 #include "menu_settings.h"
 #include "status_bar.h"
 #include "textures.h"
 #include "utils.h"
 
 static void Menu_DisplayDeviceSettings(void) {
-	int is_vita_tv = sceKernelIsPSVitaTV();
-	int selection = 0, max_items = is_vita_tv? 2 : 1;
+	int selection = 0, max_items = 2;
 
 	const char *menu_items[] = {
 		"ux0:/",
@@ -49,15 +48,14 @@ static void Menu_DisplayDeviceSettings(void) {
 
 		vita2d_draw_texture(config.device == 0? radio_on : radio_off, 850, 126);
 		vita2d_draw_texture(config.device == 1? radio_on : radio_off, 850, 198);
-		if (is_vita_tv)
-			vita2d_draw_texture(config.device == 2? radio_on : radio_off, 850, 270);
+		vita2d_draw_texture(config.device == 2? radio_on : radio_off, 850, 270);
 
 		vita2d_end_drawing();
 		vita2d_swap_buffers();
 
 		Utils_ReadControls();
 
-		if (pressed & SCE_CTRL_CIRCLE)
+		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
 		if (pressed & SCE_CTRL_UP)
@@ -69,12 +67,14 @@ static void Menu_DisplayDeviceSettings(void) {
 		Utils_SetMin(&selection, max_items, 0);
 
 		if (pressed & SCE_CTRL_ENTER) {
-			config.device = selection;
-			Config_Save(config);
-			strcpy(root_path, menu_items[config.device]);
-			strcpy(cwd, root_path);
-			sceIoRemove("ux0:data/ElevenMPV/lastdir.txt");
-			Dirbrowse_PopulateFiles(SCE_TRUE);
+			if (FS_DirExists(menu_items[selection])) {
+				config.device = selection;
+				Config_Save(config);
+				strcpy(root_path, menu_items[config.device]);
+				strcpy(cwd, root_path);
+				sceIoRemove("ux0:data/ElevenMPV/lastdir.txt");
+				Dirbrowse_PopulateFiles(SCE_TRUE);
+			}
 		}
 	}
 }
@@ -126,7 +126,7 @@ static void Menu_DisplaySortSettings(void) {
 
 		Utils_ReadControls();
 
-		if (pressed & SCE_CTRL_CIRCLE)
+		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
 		if (pressed & SCE_CTRL_UP)
@@ -190,7 +190,7 @@ static void Menu_DisplayMetadataSettings(void) {
 
 		Utils_ReadControls();
 
-		if (pressed & SCE_CTRL_CIRCLE)
+		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
 		if (pressed & SCE_CTRL_UP)
@@ -266,7 +266,7 @@ static void Menu_DisplayALCModeSettings(void) {
 
 		Utils_ReadControls();
 
-		if (pressed & SCE_CTRL_CIRCLE)
+		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
 		if (pressed & SCE_CTRL_UP)
@@ -327,7 +327,7 @@ void Menu_DisplaySettings(void) {
 
 		Utils_ReadControls();
 
-		if (pressed & SCE_CTRL_CIRCLE)
+		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
 		if (pressed & SCE_CTRL_UP)
