@@ -28,7 +28,7 @@ static void Menu_DisplayDeviceSettings(void) {
 		StatusBar_Display();
 
 		vita2d_draw_texture(icon_back, 25, 54);
-		vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, "Device Settings")) / 2) + 20, RGBA8(255, 255, 255, 255), 25, "Sort Settings");
+		vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, "Device Settings")) / 2) + 20, RGBA8(255, 255, 255, 255), 25, "Device Settings");
 
 		int printed = 0;
 
