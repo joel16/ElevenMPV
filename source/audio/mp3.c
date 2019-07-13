@@ -174,13 +174,13 @@ int MP3_Init(const char *path) {
 
 	mpg123_getformat(mp3, &sample_rate, &channels, NULL);
 	mpg123_format_none(mp3);
-	mpg123_format(mp3, 44100, channels, MPG123_ENC_SIGNED_16);
+	mpg123_format(mp3, sample_rate, channels, MPG123_ENC_SIGNED_16);
 	total_samples = mpg123_length(mp3);
 	return 0;
 }
 
 SceUInt32 MP3_GetSampleRate(void) {
-	return 44100;
+	return sample_rate;
 }
 
 SceUInt8 MP3_GetChannels(void) {
