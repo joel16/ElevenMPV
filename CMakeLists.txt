@@ -44,15 +44,15 @@ file(GLOB res_files RELATIVE
 add_resources(elevenmp_res ${res_files})
 
 include_directories(
+  libs/include
   include
   include/audio
-  include/audio/opus
   include/menus
 )
 
 link_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/libs
+  ${CMAKE_SOURCE_DIR}/libs/lib
 )
 
 add_executable(${PROJECT_NAME}

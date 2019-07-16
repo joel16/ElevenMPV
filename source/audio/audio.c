@@ -14,13 +14,13 @@
 #include "xm.h"
 
 enum Audio_FileType {
-	FILE_TYPE_NONE = 0,
-	FILE_TYPE_FLAC = 1,
-	FILE_TYPE_MP3 = 2,
-	FILE_TYPE_OGG = 3,
-	FILE_TYPE_OPUS = 4,
-	FILE_TYPE_WAV = 5,
-	FILE_TYPE_XM = 6
+	FILE_TYPE_NONE,
+	FILE_TYPE_FLAC,
+	FILE_TYPE_MP3,
+	FILE_TYPE_OGG,
+	FILE_TYPE_OPUS,
+	FILE_TYPE_WAV,
+	FILE_TYPE_XM
 };
 
 static enum Audio_FileType file_type = FILE_TYPE_NONE;
@@ -140,7 +140,7 @@ static void Audio_Decode(void *buf, unsigned int length, void *userdata) {
 int Audio_Init(const char *path) {
 	playing = SCE_TRUE;
 	paused = SCE_FALSE;
-
+	
 	if (!strncasecmp(FS_GetFileExt(path), "flac", 4))
 		file_type = FILE_TYPE_FLAC;
 	else if (!strncasecmp(FS_GetFileExt(path), "mp3", 3))
@@ -151,8 +151,8 @@ int Audio_Init(const char *path) {
 		file_type = FILE_TYPE_OPUS;
 	else if (!strncasecmp(FS_GetFileExt(path), "wav", 3))
 		file_type = FILE_TYPE_WAV;
-	else if ((!strncasecmp(FS_GetFileExt(path), "it", 2)) || (!strncasecmp(FS_GetFileExt(path), "mod", 3)) || (!strncasecmp(FS_GetFileExt(path), "s3m", 3)) 
-		|| (!strncasecmp(FS_GetFileExt(path), "xm", 2)))
+	else if ((!strncasecmp(FS_GetFileExt(path), "it", 2)) || (!strncasecmp(FS_GetFileExt(path), "mod", 3))
+		|| (!strncasecmp(FS_GetFileExt(path), "s3m", 3)) || (!strncasecmp(FS_GetFileExt(path), "xm", 2)))
 		file_type = FILE_TYPE_XM;
 
 	switch(file_type) {

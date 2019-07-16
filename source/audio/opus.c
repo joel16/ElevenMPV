@@ -2,7 +2,7 @@
 
 #include "audio.h"
 #include "config.h"
-#include "opusfile.h"
+#include "opus/opusfile.h"
 
 static OggOpusFile *opus;
 static ogg_int64_t samples_read = 0, max_samples = 0;

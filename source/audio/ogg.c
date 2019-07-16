@@ -24,7 +24,7 @@ int ogg_callback_close(void *stream) {
 }
 
 long ogg_callback_tell(void *stream) {
-	return sceIoLseek32(*(SceUID *)stream, 0, SEEK_CUR);
+	return sceIoLseek32(*(SceUID *)stream, 0, SCE_SEEK_CUR);
 }
 
 int OGG_Init(const char *path) {
