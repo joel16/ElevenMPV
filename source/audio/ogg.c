@@ -11,19 +11,19 @@ static SceUID ogg_file = 0;
 static vorbis_info *ogg_info = NULL;
 static ogg_int64_t samples_read = 0, max_lenth = 0;
 
-size_t ogg_callback_read(void *ptr, size_t size, size_t count, void *stream) {
+static size_t ogg_callback_read(void *ptr, size_t size, size_t count, void *stream) {
 	return sceIoRead(*(SceUID *)stream, ptr, size * count);
 }
 
-int ogg_callback_seek(void *stream, ogg_int64_t offset, int whence) {
+static int ogg_callback_seek(void *stream, ogg_int64_t offset, int whence) {
 	return sceIoLseek32(*(SceUID *)stream, (unsigned int) offset, whence);
 }
 
-int ogg_callback_close(void *stream) {
+static int ogg_callback_close(void *stream) {
 	return sceIoClose(*(SceUID *)stream);
 }
 
-long ogg_callback_tell(void *stream) {
+static long ogg_callback_tell(void *stream) {
 	return sceIoLseek32(*(SceUID *)stream, 0, SCE_SEEK_CUR);
 }
 
