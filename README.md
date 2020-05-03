@@ -16,6 +16,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 1. Switch to hardware decoding when possible
 2. Controls from Quick Menu
+3. More...
 
 # Currently supported formats: (16 bit signed samples)
 - FLAC
