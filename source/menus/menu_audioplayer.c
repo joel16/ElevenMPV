@@ -1,5 +1,7 @@
 #include <psp2/audioout.h>
+#include <psp2/appmgr.h>
 #include <psp2/io/dirent.h>
+#include <psp2/kernel/clib.h>
 #include <psp2/power.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +31,8 @@ static char playlist[1024][512];
 static int count = 0, selection = 0, state = 0;
 static int length_time_width = 0;
 char *position_time = NULL, *length_time = NULL, *filename = NULL;
+
+extern int isFG;
 
 static int Menu_GetMusicList(void) {
 	SceUID dir = 0;
@@ -142,63 +146,59 @@ void Menu_PlayAudio(char *path) {
 	Menu_InitMusic(path);
 
 	Utils_LockPower();
+	vita2d_set_clear_color(RGBA8(5, 5, 5, 255));
 
 	while(SCE_TRUE) {
 		vita2d_start_drawing();
-		vita2d_clear_screen();
+		if (isFG) {
+			vita2d_clear_screen();
 
-		vita2d_draw_texture(default_artwork_blur, 0, 0);
-		vita2d_draw_rectangle(0, 0, 960, 40, RGBA8(97, 97, 97, 255));
-		vita2d_draw_texture(icon_back, 10, 60);
-		StatusBar_Display();
+			vita2d_draw_texture(icon_back, 10, 60);
 
-		if ((metadata.has_meta) && (metadata.title[0] != '\0') && (metadata.artist[0] != '\0')) {
-			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.title))) + 20, RGBA8(255, 255, 255, 255), 25, strupr(metadata.title));
-			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.artist))) + 55, RGBA8(255, 255, 255, 255), 25, strupr(metadata.artist));
+			if ((metadata.has_meta) && (metadata.title[0] != '\0') && (metadata.artist[0] != '\0')) {
+				vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.title))) + 20, RGBA8(255, 255, 255, 255), 25, strupr(metadata.title));
+				vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.artist))) + 55, RGBA8(255, 255, 255, 255), 25, strupr(metadata.artist));
+			}
+			else if ((metadata.has_meta) && (metadata.title[0] != '\0'))
+				vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.title))) + 15, RGBA8(255, 255, 255, 255), 25, strupr(metadata.title));
+			else
+				vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(filename))) + 15, RGBA8(255, 255, 255, 255), 25, filename);
+
+			vita2d_draw_rectangle(0, 124, 400, 400, RGBA8(97, 97, 97, 255));
+
+			vita2d_draw_rectangle(410, 124, 550, 400, RGBA8(45, 48, 50, 255)); // Draw info box (outer)
+			vita2d_draw_rectangle(420, 134, 530, 380, RGBA8(46, 49, 51, 255)); // Draw info box (inner)
+
+			if ((metadata.has_meta) && (metadata.album[0] != '\0'))
+				vita2d_font_draw_textf(font, 425, 155, RGBA8(255, 255, 255, 255), 25, "Album: %s\n", metadata.album);
+
+			if ((metadata.has_meta) && (metadata.year[0] != '\0'))
+				vita2d_font_draw_textf(font, 425, 185, RGBA8(255, 255, 255, 255), 25, "Year: %s\n", metadata.year);
+
+			if ((metadata.has_meta) && (metadata.genre[0] != '\0'))
+				vita2d_font_draw_textf(font, 425, 215, RGBA8(255, 255, 255, 255), 25, "Genre: %s\n", metadata.genre);
+
+			if (!Audio_IsPaused())
+				vita2d_draw_texture(btn_pause, 410 + ((550 - BUTTON_WIDTH) / 2), 124 + ((400 - BUTTON_HEIGHT) / 2)); // Playing
+			else
+				vita2d_draw_texture(btn_play, 410 + ((550 - BUTTON_WIDTH) / 2), 124 + ((400 - BUTTON_HEIGHT) / 2)); // Paused
+
+			vita2d_draw_texture(btn_rewind, 410 + ((550 - BUTTON_WIDTH) / 2) - 136, 124 + ((400 - BUTTON_HEIGHT) / 2));
+			vita2d_draw_texture(btn_forward, 410 + ((550 - BUTTON_WIDTH) / 2) + 136, 124 + ((400 - BUTTON_HEIGHT) / 2));
+
+			vita2d_draw_texture(state == MUSIC_STATE_SHUFFLE ? btn_shuffle_overlay : btn_shuffle, 410 + ((550 - BUTTON_WIDTH) / 2) - 90, 124 + ((400 - BUTTON_HEIGHT) / 2) + 100);
+			vita2d_draw_texture(state == MUSIC_STATE_REPEAT ? btn_repeat_overlay : btn_repeat, 410 + ((550 - BUTTON_WIDTH) / 2) + 90, 124 + ((400 - BUTTON_HEIGHT) / 2) + 100);
+
+			Menu_ConvertSecondsToString(position_time, Audio_GetPositionSeconds());
+			vita2d_font_draw_text(font, 460, 480, RGBA8(255, 255, 255, 255), 25, position_time);
+			vita2d_font_draw_text(font, 910 - length_time_width, 480, RGBA8(255, 255, 255, 255), 25, length_time);
+			vita2d_draw_rectangle(460, 490, 450, 4, RGBA8(97, 97, 97, 255));
+			vita2d_draw_rectangle(460, 490, (((double)Audio_GetPosition() / (double)Audio_GetLength()) * 450.0), 4, RGBA8(255, 255, 255, 255));
 		}
-		else if ((metadata.has_meta) && (metadata.title[0] != '\0'))
-			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(metadata.title))) + 15, RGBA8(255, 255, 255, 255), 25, strupr(metadata.title));
-		else
-			vita2d_font_draw_text(font, 80, 22 + (80 - vita2d_font_text_height(font, 25, strupr(filename))) + 15, RGBA8(255, 255, 255, 255), 25, filename);
-
-		vita2d_draw_rectangle(0, 124, 400, 400, RGBA8(97, 97, 97, 255));
-
-		if ((metadata.has_meta) && (metadata.cover_image))
-			vita2d_draw_texture_scale(metadata.cover_image, 0, 124, 400.0f/vita2d_texture_get_width(metadata.cover_image), 400.0f/vita2d_texture_get_height(metadata.cover_image));
-		else
-			vita2d_draw_texture(default_artwork, 0, 124); // Default album art
-
-		vita2d_draw_rectangle(410, 124, 550, 400, RGBA8(45, 48, 50, 255)); // Draw info box (outer)
-		vita2d_draw_rectangle(420, 134, 530, 380, RGBA8(46, 49, 51, 255)); // Draw info box (inner)
-
-		if ((metadata.has_meta) && (metadata.album[0] != '\0'))
-			vita2d_font_draw_textf(font, 425, 155, RGBA8(255, 255, 255, 255), 25, "Album: %s\n", metadata.album);
-
-		if ((metadata.has_meta) && (metadata.year[0] != '\0'))
-			vita2d_font_draw_textf(font, 425, 185, RGBA8(255, 255, 255, 255), 25, "Year: %s\n", metadata.year);
-
-		if ((metadata.has_meta) && (metadata.genre[0] != '\0'))
-			vita2d_font_draw_textf(font, 425, 215, RGBA8(255, 255, 255, 255), 25, "Genre: %s\n", metadata.genre);
-
-		if (!Audio_IsPaused())
-			vita2d_draw_texture(btn_pause, 410 + ((550 - BUTTON_WIDTH) / 2), 124 + ((400 - BUTTON_HEIGHT) / 2)); // Playing
-		else
-			vita2d_draw_texture(btn_play, 410 + ((550 - BUTTON_WIDTH) / 2), 124 + ((400 - BUTTON_HEIGHT) / 2)); // Paused
-
-		vita2d_draw_texture(btn_rewind, 410 + ((550 - BUTTON_WIDTH) / 2) - 136, 124 + ((400 - BUTTON_HEIGHT) / 2));
-		vita2d_draw_texture(btn_forward, 410 + ((550 - BUTTON_WIDTH) / 2) + 136, 124 + ((400 - BUTTON_HEIGHT) / 2));
-
-		vita2d_draw_texture(state == MUSIC_STATE_SHUFFLE? btn_shuffle_overlay : btn_shuffle, 410 + ((550 - BUTTON_WIDTH) / 2) - 90, 124 + ((400 - BUTTON_HEIGHT) / 2) + 100);
-		vita2d_draw_texture(state == MUSIC_STATE_REPEAT? btn_repeat_overlay : btn_repeat, 410 + ((550 - BUTTON_WIDTH) / 2) + 90, 124 + ((400 - BUTTON_HEIGHT) / 2) + 100);
-
-		Menu_ConvertSecondsToString(position_time, Audio_GetPositionSeconds());
-		vita2d_font_draw_text(font, 460, 480, RGBA8(255, 255, 255, 255), 25, position_time);
-		vita2d_font_draw_text(font, 910 - length_time_width, 480, RGBA8(255, 255, 255, 255), 25, length_time);
-		vita2d_draw_rectangle(460, 490, 450, 4, RGBA8(97, 97, 97, 255));
-		vita2d_draw_rectangle(460, 490, (((double)Audio_GetPosition()/(double)Audio_GetLength()) * 450.0), 4, RGBA8(255, 255, 255, 255));
-
+		else {}
 		vita2d_end_drawing();
-		vita2d_swap_buffers();
+		vita2d_wait_rendering_done();
+		vita2d_end_shfb();
 
 		if (!playing) {
 			if (state == MUSIC_STATE_NONE) {
@@ -253,9 +253,6 @@ void Menu_PlayAudio(char *path) {
 				Music_HandleNext(SCE_TRUE, MUSIC_STATE_NONE);
 		}
 
-		if (pressed & SCE_CTRL_START)
-			scePowerRequestDisplayOff();
-
 		if (pressed & SCE_CTRL_CANCEL)
 			break;
 
@@ -291,6 +288,9 @@ void Menu_PlayAudio(char *path) {
 			else
 				state = MUSIC_STATE_REPEAT;
 		}
+
+		if (Utils_AppStatusIsRunning())
+			break;
 	}
 
 	free(filename);

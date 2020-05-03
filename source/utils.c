@@ -2,14 +2,40 @@
 #include <psp2/io/dirent.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/kernel/clib.h>
 #include <psp2/shellutil.h>
 #include <psp2/system_param.h>
 #include <string.h>
 
 #include "common.h"
 
+typedef struct SceAppMgrAppStatus { // size is 0x40 on FW 0.990
+	SceUInt32 unk_0;				// 0x0
+	SceUInt32 launchMode;				// 0x4
+	SceUInt32 bgm_priority_or_status;		// 0x8
+	char appName[32];				// 0xC
+	SceUInt32 unk_2C;				// 0x2C
+	SceUID appId;					// 0x30 - Application ID
+	SceUID processId;				// 0x34 - Process ID
+	SceUInt32 isForeground;			// 0x38
+	SceUInt32 status_related_2;			// 0x3C
+} SceAppMgrAppStatus;
+
+typedef struct SceAppMgrEvent { // size is 0x64
+	int event;						/* Event ID */
+	SceUID appId;						/* Application ID. Added when required by the event */
+	char  param[56];		/* Parameters to pass with the event */
+} SceAppMgrEvent;
+
+int _sceAppMgrReceiveEvent(SceAppMgrEvent *appEvent);
+int sceAppMgrQuitForNonSuspendableApp(void);
+
+int isFG = SCE_TRUE;
+
+static SceAppMgrEvent appEvent;
 static SceCtrlData pad, old_pad;
 static int lock_power = 0;
+static int finish_flag = SCE_FALSE;
 
 void Utils_SetMax(int *set, int value, int max) {
 	if (*set > max)
@@ -31,7 +57,38 @@ int Utils_ReadControls(void) {
 	return 0;
 }
 
+int Utils_AppStatusIsRunning(void)
+{
+	return finish_flag;
+}
+
+int Utils_AppStatusWatchdog(SceSize argc, void* argv)
+{
+	while (SCE_TRUE) {
+		_sceAppMgrReceiveEvent(&appEvent);
+		switch (appEvent.event) {
+		case 268435457: // resume
+			isFG = SCE_TRUE;
+			break;
+		case 268435458: // exit
+			isFG = SCE_FALSE;
+			break;
+		case 536870913: // destroy
+			/* sceAppMgrQuitForNonSuspendableApp(); */ //Doesn't work due to ksceSblACMgrIsNonGameProgram()
+			finish_flag = SCE_TRUE;
+			break;
+		}
+		sceKernelDelayThread(1000);
+	}
+
+	return 0;
+}
+
 int Utils_InitAppUtil(void) {
+
+	SceUID watchdog = sceKernelCreateThread("appStatusWatchdog", Utils_AppStatusWatchdog, 192, 0x1000, 0, 0, NULL);
+	sceKernelStartThread(watchdog, 0, NULL);
+
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;
 	memset(&init, 0, sizeof(SceAppUtilInitParam));
@@ -112,20 +169,16 @@ static int power_tick_thread(SceSize args, void *argp) {
 
 void Utils_InitPowerTick(void) {
 	SceUID thid = 0;
-	if (R_SUCCEEDED(thid = sceKernelCreateThread("power_tick_thread", power_tick_thread, 0x10000100, 0x40000, 0, 0, NULL)))
+	if (R_SUCCEEDED(thid = sceKernelCreateThread("power_tick_thread", power_tick_thread, 192, 0x1000, 0, 0, NULL)))
 		sceKernelStartThread(thid, 0, NULL);
 }
 
 void Utils_LockPower(void) {
-	if (!lock_power)
-		sceShellUtilLock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
 	lock_power++;
 }
 
 void Utils_UnlockPower(void) {
-	if (lock_power)
-		sceShellUtilUnlock(SCE_SHELL_UTIL_LOCK_TYPE_PS_BTN);
 
 	lock_power--;
 	if (lock_power < 0)

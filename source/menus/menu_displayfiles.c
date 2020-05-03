@@ -1,4 +1,5 @@
 #include <string.h>
+#include <psp2/appmgr.h>
 
 #include "common.h"
 #include "dirbrowse.h"
@@ -6,6 +7,8 @@
 #include "status_bar.h"
 #include "textures.h"
 #include "utils.h"
+
+extern int isFG;
 
 static void Menu_HandleControls(void) {
 	if (file_count > 0) {
@@ -38,15 +41,16 @@ void Menu_DisplayFiles(void) {
 
 	while (SCE_TRUE) {
 		vita2d_start_drawing();
-		vita2d_clear_screen();
+		if (isFG) {
+			vita2d_clear_screen();
 
-		vita2d_draw_rectangle(0, 0, 960, 40, RGBA8(40, 40, 40, 255));
-		vita2d_draw_rectangle(0, 40, 960, 72, RGBA8(51, 51, 51, 255));
-		StatusBar_Display();
-		Dirbrowse_DisplayFiles();
-
+			vita2d_draw_rectangle(0, 0, 960, 112, RGBA8(51, 51, 51, 255));
+			Dirbrowse_DisplayFiles();
+		}
+		else {}
 		vita2d_end_drawing();
-		vita2d_swap_buffers();
+		vita2d_wait_rendering_done();
+		vita2d_end_shfb();
 
 		Utils_ReadControls();
 		Menu_HandleControls();
@@ -55,6 +59,9 @@ void Menu_DisplayFiles(void) {
 			Menu_DisplaySettings();
 
 		if (pressed & SCE_CTRL_START)
+			break;
+
+		if (Utils_AppStatusIsRunning())
 			break;
 	}
 }

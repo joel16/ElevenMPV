@@ -3,7 +3,7 @@
 
 #include <psp2/ctrl.h>
 #include <psp2/types.h>
-#include <vita2d.h>
+#include <vita2d_sys.h>
 
 /// Checks whether a result code indicates success.
 #define R_SUCCEEDED(res)   ((res)>=0)

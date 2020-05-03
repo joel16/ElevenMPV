@@ -13,5 +13,6 @@ char *Utils_Basename(const char *filename);
 void Utils_InitPowerTick(void);
 void Utils_LockPower(void);
 void Utils_UnlockPower(void);
+int Utils_AppStatusIsRunning(void);
 
 #endif

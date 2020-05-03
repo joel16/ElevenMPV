@@ -1,6 +1,7 @@
 #include <psp2/appmgr.h>
 #include <psp2/io/stat.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/kernel/clib.h>
 #include <psp2/shellutil.h>
 #include <psp2/sysmodule.h>
 #include <stdio.h>
@@ -16,7 +17,21 @@
 #include "touch.h"
 #include "utils.h"
 
+#define CLIB_HEAP_SIZE 1 * 1024 * 1024
+
+int _newlib_heap_size_user = 1 * 1024 * 1024;
+
+int sceAppMgrAcquireBgmPortForMusicPlayer(void);
+
 int main(int argc, char *argv[]) {
+
+	void* clibm_base;
+	void* mspace;
+	SceUID clib_heap = sceKernelAllocMemBlock("ClibHeap", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW_UNCACHE, CLIB_HEAP_SIZE, NULL);
+	sceKernelGetMemBlockBase(clib_heap, &clibm_base);
+	mspace = sceClibMspaceCreate(clibm_base, CLIB_HEAP_SIZE);
+
+	vita2d_clib_pass_mspace(mspace);
 	vita2d_init();
 	font = vita2d_load_font_file("app0:Roboto-Regular.ttf");
 	Textures_Load();
@@ -29,7 +44,7 @@ int main(int argc, char *argv[]) {
 	SCE_CTRL_ENTER = Utils_GetEnterButton();
 	SCE_CTRL_CANCEL = Utils_GetCancelButton();
 
-	sceAppMgrAcquireBgmPort();
+	sceAppMgrAcquireBgmPortForMusicPlayer();
 
 	Touch_Init();
 

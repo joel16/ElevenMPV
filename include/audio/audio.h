@@ -2,7 +2,7 @@
 #define _ELEVENMPV_AUDIO_H_
 
 #include <psp2/types.h>
-#include <vita2d.h>
+#include <vita2d_sys.h>
 
 extern SceBool playing, paused;
 
