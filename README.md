@@ -9,7 +9,8 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 # Limitations:
 
-Cover art support is temporary disabled.
+1. Cover art support is temporary disabled.
+2. Some performance issues may occur.
 
 # Coming soon:
 
