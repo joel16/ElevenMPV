@@ -1,7 +1,20 @@
-# ElevenMPV - Eleven Music Player VITA
+# ElevenMPV-A - Advanced Eleven Music Player VITA
 
 A homebrew music player for Playstation VITA that aims to support many different audio formats compared to the offical PS VITA music application.
 
+# BG playback support:
+
+1. By default: with most of the games
+2. With [LowMemMode plugin](https://github.com/GrapheneCt/LowMemMode): with all games
+
+# Limitations:
+
+Cover art support is temporary disabled.
+
+# Coming soon:
+
+1. Switch to hardware decoding when possible
+2. Controls from Quick Menu
 
 # Currently supported formats: (16 bit signed samples)
 - FLAC
@@ -46,6 +59,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 
 # Credits:
+- joel16: [ElevenMPV](https://github.com/joel16/ElevenMPV)
 - MPG123 contributors.
 - dr_libs by mackron.
 - libvorbis, libogg and libopus contributors.
