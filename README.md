@@ -56,7 +56,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 - R trigger: Next audio file in current directory.
 - Triangle: Shuffle audio files in current directory.
 - Square: Repeat audio files in current directory.
-- Start: Turn off display and keep playing audio in background.
+- Power Button: Turn off display and keep playing audio in background.
 - Touch: Touch anywhere on the progress bar to seek to that location.
 
 
