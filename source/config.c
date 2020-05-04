@@ -1,5 +1,5 @@
+#include <psp2/kernel/clib.h>
 #include <psp2/io/fcntl.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -11,6 +11,8 @@
 
 config_t config;
 static int config_version_holder = 0;
+
+extern void* mspace;
 
 const char *config_file =
 	"config_ver = %d\n"
@@ -24,23 +26,23 @@ const char *config_file =
 int Config_Save(config_t config) {
 	int ret = 0;
 	
-	char *buf = malloc(128);
-	int len = snprintf(buf, 128, config_file, CONFIG_VERSION, config.meta_flac, config.meta_mp3, config.meta_opus, config.sort, 
+	char *buf = sceClibMspaceMalloc(mspace, 128);
+	int len = sceClibSnprintf(buf, 128, config_file, CONFIG_VERSION, config.meta_flac, config.meta_mp3, config.meta_opus, config.sort, 
 		config.alc_mode, config.device);
 	
-	if (R_FAILED(ret = FS_WriteFile("ux0:data/ElevenMPV/config.cfg", buf, len))) {
-		free(buf);
+	if (R_FAILED(ret = FS_WriteFile("savedata0:config.cfg", buf, len))) {
+		sceClibMspaceFree(mspace, buf);
 		return ret;
 	}
 	
-	free(buf);
+	sceClibMspaceFree(mspace, buf);
 	return 0;
 }	
 	
 int Config_Load(void) {
 	int ret = 0;
 	
-	if (!FS_FileExists("ux0:data/ElevenMPV/config.cfg")) {
+	if (!FS_FileExists("savedata0:config.cfg")) {
 		// set these to the following by default:
 		config.meta_flac = SCE_FALSE;
 		config.meta_mp3 = SCE_TRUE;
@@ -52,22 +54,22 @@ int Config_Load(void) {
 	}
 
 	SceOff size = 0;
-	FS_GetFileSize("ux0:data/ElevenMPV/config.cfg", &size);
-	char *buf = malloc(size + 1);
+	FS_GetFileSize("savedata0:config.cfg", &size);
+	char *buf = sceClibMspaceMalloc(mspace, size + 1);
 
-	if (R_FAILED(ret = FS_ReadFile("ux0:data/ElevenMPV/config.cfg", buf, size))) {
-		free(buf);
+	if (R_FAILED(ret = FS_ReadFile("savedata0:config.cfg", buf, size))) {
+		sceClibMspaceFree(mspace, buf);
 		return ret;
 	}
 
 	buf[size] = '\0';
 	sscanf(buf, config_file, &config_version_holder, &config.meta_flac, &config.meta_mp3, &config.meta_opus, &config.sort, 
 		&config.alc_mode, &config.device);
-	free(buf);
+	sceClibMspaceFree(mspace, buf);
 
 	// Delete config file if config file is updated. This will rarely happen.
 	if (config_version_holder  < CONFIG_VERSION) {
-		sceIoRemove("ux0:data/ElevenMPV/config.cfg");
+		sceIoRemove("savedata0:config.cfg");
 		config.meta_flac = SCE_FALSE;
 		config.meta_mp3 = SCE_TRUE;
 		config.meta_opus = SCE_TRUE;
@@ -88,20 +90,20 @@ int Config_GetLastDirectory(void) {
 		"uma0:/"
 	};
 	
-	if (!FS_FileExists("ux0:data/ElevenMPV/lastdir.txt")) {
-		snprintf(root_path, 8, "ux0:/");
-		FS_WriteFile("ux0:data/ElevenMPV/lastdir.txt", root_path, strlen(root_path) + 1);
+	if (!FS_FileExists("savedata0:lastdir.txt")) {
+		sceClibSnprintf(root_path, 8, "ux0:/");
+		FS_WriteFile("savedata0:lastdir.txt", root_path, strlen(root_path) + 1);
 		strcpy(cwd, root_path); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
 	}
 	else {
 		strcpy(root_path, root_paths[config.device]);
 		SceOff size = 0;
 
-		FS_GetFileSize("ux0:data/ElevenMPV/lastdir.txt", &size);
-		char *buf = malloc(size + 1);
+		FS_GetFileSize("savedata0:lastdir.txt", &size);
+		char *buf = sceClibMspaceMalloc(mspace, size + 1);
 
-		if (R_FAILED(ret = FS_ReadFile("ux0:data/ElevenMPV/lastdir.txt", buf, size))) {
-			free(buf);
+		if (R_FAILED(ret = FS_ReadFile("savedata0:lastdir.txt", buf, size))) {
+			sceClibMspaceFree(mspace, buf);
 			return ret;
 		}
 
@@ -114,7 +116,7 @@ int Config_GetLastDirectory(void) {
 		else
 			strcpy(cwd, root_path);
 		
-		free(buf);
+		sceClibMspaceFree(mspace, buf);
 	}
 	
 	return 0;

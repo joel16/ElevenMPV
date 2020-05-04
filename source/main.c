@@ -19,14 +19,14 @@
 
 #define CLIB_HEAP_SIZE 1 * 1024 * 1024
 
-int _newlib_heap_size_user = 1 * 1024 * 1024;
+int _newlib_heap_size_user = 128 * 1024;
+void* mspace;
 
 int sceAppMgrAcquireBgmPortForMusicPlayer(void);
 
 int main(int argc, char *argv[]) {
 
 	void* clibm_base;
-	void* mspace;
 	SceUID clib_heap = sceKernelAllocMemBlock("ClibHeap", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW_UNCACHE, CLIB_HEAP_SIZE, NULL);
 	sceKernelGetMemBlockBase(clib_heap, &clibm_base);
 	mspace = sceClibMspaceCreate(clibm_base, CLIB_HEAP_SIZE);
@@ -36,7 +36,6 @@ int main(int argc, char *argv[]) {
 	font = vita2d_load_font_file("app0:Roboto-Regular.ttf");
 	Textures_Load();
 
-	sceIoMkdir("ux0:data/ElevenMPV", 0777);
 	Config_Load();
 	Config_GetLastDirectory();
 

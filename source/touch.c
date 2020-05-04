@@ -7,13 +7,15 @@
 		
 */
 #include <psp2/touch.h>
-#include <malloc.h>
+#include <psp2/kernel/clib.h>
 
 #include "touch.h"
 
 #define lerp(value, from_max, to_max) ((((value * 10) * (to_max * 10)) / (from_max * 10)) / 10)
 
 static SceTouchData touch;
+
+extern void* mspace;
 
 typedef struct {
 	int posX;
@@ -40,14 +42,14 @@ void Touch_Reset(void) {
 int Touch_Init(void) {
 	sceTouchSetSamplingState(SCE_TOUCH_PORT_FRONT, 1);
 	
-	touchState = malloc(sizeof(touchStateData));
+	touchState = sceClibMspaceMalloc(mspace, sizeof(touchStateData));
 	Touch_Reset();
 	
 	return 1;
 }
 
 void Touch_Shutdown(void) {
-	free(touchState);
+	sceClibMspaceFree(mspace, touchState);
 }
 
 int Touch_GetX(void) {

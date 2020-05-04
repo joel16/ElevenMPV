@@ -9,18 +9,6 @@
 
 #include "common.h"
 
-typedef struct SceAppMgrAppStatus { // size is 0x40 on FW 0.990
-	SceUInt32 unk_0;				// 0x0
-	SceUInt32 launchMode;				// 0x4
-	SceUInt32 bgm_priority_or_status;		// 0x8
-	char appName[32];				// 0xC
-	SceUInt32 unk_2C;				// 0x2C
-	SceUID appId;					// 0x30 - Application ID
-	SceUID processId;				// 0x34 - Process ID
-	SceUInt32 isForeground;			// 0x38
-	SceUInt32 status_related_2;			// 0x3C
-} SceAppMgrAppStatus;
-
 typedef struct SceAppMgrEvent { // size is 0x64
 	int event;						/* Event ID */
 	SceUID appId;						/* Application ID. Added when required by the event */
@@ -28,7 +16,6 @@ typedef struct SceAppMgrEvent { // size is 0x64
 } SceAppMgrEvent;
 
 int _sceAppMgrReceiveEvent(SceAppMgrEvent *appEvent);
-int sceAppMgrQuitForNonSuspendableApp(void);
 
 int isFG = SCE_TRUE;
 
@@ -153,7 +140,7 @@ int Utils_Alphasort(const void *p1, const void *p2) {
 }
 
 char *Utils_Basename(const char *filename) {
-	char *p = strrchr (filename, '/');
+	char *p = sceClibStrrchr (filename, '/');
 	return p ? p + 1 : (char *) filename;
 }
 

@@ -77,7 +77,7 @@ static void Menu_DisplayDeviceSettings(void) {
 				Config_Save(config);
 				strcpy(root_path, menu_items[config.device]);
 				strcpy(cwd, root_path);
-				sceIoRemove("ux0:data/ElevenMPV/lastdir.txt");
+				sceIoRemove("savedata0:lastdir.txt");
 				Dirbrowse_PopulateFiles(SCE_TRUE);
 			}
 		}

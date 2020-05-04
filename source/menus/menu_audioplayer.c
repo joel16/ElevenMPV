@@ -3,7 +3,6 @@
 #include <psp2/io/dirent.h>
 #include <psp2/kernel/clib.h>
 #include <psp2/power.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -33,13 +32,16 @@ static int length_time_width = 0;
 char *position_time = NULL, *length_time = NULL, *filename = NULL;
 
 extern int isFG;
+extern void* mspace;
+
+void* sceClibMspaceCalloc(void* space, size_t num, size_t size);
 
 static int Menu_GetMusicList(void) {
 	SceUID dir = 0;
 
 	if (R_SUCCEEDED(dir = sceIoDopen(cwd))) {
 		int entryCount = 0, i = 0;
-		SceIoDirent *entries = (SceIoDirent *)calloc(MAX_FILES, sizeof(SceIoDirent));
+		SceIoDirent *entries = (SceIoDirent *)sceClibMspaceCalloc(mspace, MAX_FILES, sizeof(SceIoDirent));
 
 		while (sceIoDread(dir, &entries[entryCount]) > 0)
 			entryCount++;
@@ -48,18 +50,18 @@ static int Menu_GetMusicList(void) {
 		qsort(entries, entryCount, sizeof(SceIoDirent), Utils_Alphasort);
 
 		for (i = 0; i < entryCount; i++) {
-			if ((!strncasecmp(FS_GetFileExt(entries[i].d_name), "flac", 4)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "it", 4)) || 
-				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "mod", 4)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "mp3", 4)) || 
-				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "ogg", 4)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "opus", 4)) ||
-				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 4)) || (!strncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 4)) || 
-				(!strncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 4))) {
+			if ((!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "flac", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "it", 4)) ||
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "mod", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "mp3", 4)) || 
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "ogg", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "opus", 4)) ||
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 4)) || 
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 4))) {
 				strcpy(playlist[count], cwd);
 				strcpy(playlist[count] + strlen(playlist[count]), entries[i].d_name);
 				count++;
 			}
 		}
 
-		free(entries);
+		sceClibMspaceFree(mspace, entries);
 	}
 	else {
 		sceIoDclose(dir);
@@ -71,7 +73,7 @@ static int Menu_GetMusicList(void) {
 
 static int Music_GetCurrentIndex(char *path) {
 	for(int i = 0; i < count; ++i) {
-		if (!strcmp(playlist[i], path))
+		if (!sceClibStrcmp(playlist[i], path))
 			return i;
 	}
 
@@ -85,9 +87,9 @@ static void Menu_ConvertSecondsToString(char *string, SceUInt64 seconds) {
 	s = (seconds - (3600 * h) - (m * 60));
 
 	if (h > 0)
-		snprintf(string, 35, "%02d:%02d:%02d", h, m, s);
+		sceClibSnprintf(string, 35, "%02d:%02d:%02d", h, m, s);
 	else
-		snprintf(string, 35, "%02d:%02d", m, s);
+		sceClibSnprintf(string, 35, "%02d:%02d", m, s);
 }
 
 static void Menu_InitMusic(char *path) {
@@ -95,10 +97,10 @@ static void Menu_InitMusic(char *path) {
 	if (sceAudioOutSetAlcMode(config.alc_mode) < 0)
 		return;
 
-	filename = malloc(128);
-	snprintf(filename, 128, Utils_Basename(path));
-	position_time = malloc(35);
-	length_time = malloc(35);
+	filename = sceClibMspaceMalloc(mspace, 128);
+	sceClibSnprintf(filename, 128, Utils_Basename(path));
+	position_time = sceClibMspaceMalloc(mspace, 35);
+	length_time = sceClibMspaceMalloc(mspace, 35);
 	length_time_width = 0;
 
 	Menu_ConvertSecondsToString(length_time, Audio_GetLengthSeconds());
@@ -128,9 +130,9 @@ static void Music_HandleNext(SceBool forward, int state) {
 
 	Audio_Stop();
 
-	free(filename);
-	free(length_time);
-	free(position_time);
+	sceClibMspaceFree(mspace, filename);
+	sceClibMspaceFree(mspace, length_time);
+	sceClibMspaceFree(mspace, position_time);
 
 	if ((metadata.has_meta) && (metadata.cover_image)) {
 		vita2d_wait_rendering_done();
@@ -293,9 +295,9 @@ void Menu_PlayAudio(char *path) {
 			break;
 	}
 
-	free(filename);
-	free(length_time);
-	free(position_time);
+	sceClibMspaceFree(mspace, filename);
+	sceClibMspaceFree(mspace, length_time);
+	sceClibMspaceFree(mspace, position_time);
 
 	if ((metadata.has_meta) && (metadata.cover_image)) {
 		vita2d_wait_rendering_done();

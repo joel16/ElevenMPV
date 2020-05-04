@@ -1,8 +1,8 @@
+#include <psp2/kernel/clib.h>
 #include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "common.h"
@@ -15,19 +15,22 @@
 
 File *files = NULL;
 
+extern void* mspace;
+void* sceClibMspaceCalloc(void* space, size_t num, size_t size);
+
 static void Dirbrowse_RecursiveFree(File *node) {
 	if (node == NULL) // End of list
 		return;
 	
 	Dirbrowse_RecursiveFree(node->next); // Nest further
-	free(node); // Free memory
+	sceClibMspaceFree(mspace, node); // Free memory
 }
 
 static void Dirbrowse_SaveLastDirectory(void) {
-	char *buf = malloc(256);
-	int len = snprintf(buf, 256, "%s\n", cwd);
-	FS_WriteFile("ux0:data/elevenmpv/lastdir.txt", buf, len);
-	free(buf);
+	char *buf = sceClibMspaceMalloc(mspace, 256);
+	int len = sceClibSnprintf(buf, 256, "%s\n", cwd);
+	FS_WriteFile("savedata0:lastdir.txt", buf, len);
+	sceClibMspaceFree(mspace, buf);
 }
 
 static int cmpstringp(const void *p1, const void *p2) {
@@ -62,7 +65,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 
 	if (R_SUCCEEDED(dir = sceIoDopen(cwd))) {
 		int entryCount = 0;
-		SceIoDirent *entries = (SceIoDirent *)calloc(MAX_FILES, sizeof(SceIoDirent));
+		SceIoDirent *entries = (SceIoDirent *)sceClibMspaceCalloc(mspace, MAX_FILES, sizeof(SceIoDirent));
 
 		while (sceIoDread(dir, &entries[entryCount]) > 0)
 			entryCount++;
@@ -72,17 +75,17 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 
 		for (int i = -1; i < entryCount; i++) {
 			// Allocate Memory
-			File *item = (File *)malloc(sizeof(File));
-			memset(item, 0, sizeof(File));
+			File *item = (File *)sceClibMspaceMalloc(mspace, sizeof(File));
+			sceClibMemset(item, 0, sizeof(File));
 
-			if ((strcmp(cwd, root_path)) && (i == -1) && (!parent_dir_set)) {
+			if ((sceClibStrcmp(cwd, root_path)) && (i == -1) && (!parent_dir_set)) {
 				strcpy(item->name, "..");
 				item->is_dir = SCE_TRUE;
 				parent_dir_set = SCE_TRUE;
 				file_count++;
 			}
 			else {
-				if ((i == -1) && (!(strcmp(cwd, root_path))))
+				if ((i == -1) && (!(sceClibStrcmp(cwd, root_path))))
 					continue;
 
 				item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
@@ -108,7 +111,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 			}
 		}
 
-		free(entries);
+		sceClibMspaceFree(mspace, entries);
 	}
 	else
 		return dir;
@@ -126,7 +129,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 void Dirbrowse_DisplayFiles(void) {
 	vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 25, cwd);
 
-	if (!(!strcmp(cwd, root_path)))
+	if (!(!sceClibStrcmp(cwd, root_path)))
 		vita2d_draw_texture(icon_back, 25, 54);
 
 	int i = 0, printed = 0;
@@ -142,14 +145,14 @@ void Dirbrowse_DisplayFiles(void) {
 
 			if (file->is_dir)
 				vita2d_draw_texture(icon_dir, 15, 117 + (72 * printed));
-			else if ((!strncasecmp(file->ext, "flac", 4)) || (!strncasecmp(file->ext, "it", 4)) || (!strncasecmp(file->ext, "mod", 4))
-				|| (!strncasecmp(file->ext, "mp3", 4)) || (!strncasecmp(file->ext, "ogg", 4)) || (!strncasecmp(file->ext, "opus", 4))
-				|| (!strncasecmp(file->ext, "s3m", 4))|| (!strncasecmp(file->ext, "wav", 4)) || (!strncasecmp(file->ext, "xm", 4)))
+			else if ((!sceClibStrncasecmp(file->ext, "flac", 4)) || (!sceClibStrncasecmp(file->ext, "it", 4)) || (!sceClibStrncasecmp(file->ext, "mod", 4))
+				|| (!sceClibStrncasecmp(file->ext, "mp3", 4)) || (!sceClibStrncasecmp(file->ext, "ogg", 4)) || (!sceClibStrncasecmp(file->ext, "opus", 4))
+				|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4)))
 				vita2d_draw_texture(icon_audio, 15, 117 + (72 * printed));
 			else
 				vita2d_draw_texture(icon_file, 15, 117 + (72 * printed));
 
-			if (strncmp(file->name, "..", 2) == 0)
+			if (sceClibStrncmp(file->name, "..", 2) == 0)
 				vita2d_font_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 25, "Parent folder");
 			else 
 				vita2d_font_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 25, file->name);
@@ -188,9 +191,9 @@ void Dirbrowse_OpenFile(void) {
 			Dirbrowse_PopulateFiles(SCE_TRUE);
 		}
 	}
-	else if ((!strncasecmp(file->ext, "flac", 4)) || (!strncasecmp(file->ext, "it", 4)) || (!strncasecmp(file->ext, "mod", 4))
-		|| (!strncasecmp(file->ext, "mp3", 4)) || (!strncasecmp(file->ext, "ogg", 4)) || (!strncasecmp(file->ext, "opus", 4))
-		|| (!strncasecmp(file->ext, "s3m", 4))|| (!strncasecmp(file->ext, "wav", 4)) || (!strncasecmp(file->ext, "xm", 4)))
+	else if ((!sceClibStrncasecmp(file->ext, "flac", 4)) || (!sceClibStrncasecmp(file->ext, "it", 4)) || (!sceClibStrncasecmp(file->ext, "mod", 4))
+		|| (!sceClibStrncasecmp(file->ext, "mp3", 4)) || (!sceClibStrncasecmp(file->ext, "ogg", 4)) || (!sceClibStrncasecmp(file->ext, "opus", 4))
+		|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4)))
 		Menu_PlayAudio(path);
 }
 
@@ -202,7 +205,7 @@ int Dirbrowse_Navigate(SceBool parent) {
 		return -1;
 
 	// Special case ".."
-	if ((parent) || (!strncmp(file->name, "..", 2))) {
+	if ((parent) || (!sceClibStrncmp(file->name, "..", 2))) {
 		char *slash = NULL;
 
 		// Find last '/' in working directory
