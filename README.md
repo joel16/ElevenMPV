@@ -14,7 +14,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 # Currently supported formats: (16 bit signed samples)
 
-## Hardware decoding (flawless performance):
+## Hardware decoding (flawless performance even in games):
 - MP3
 - ATRAC9
 - WAV
