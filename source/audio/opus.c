@@ -51,26 +51,6 @@ int OPUS_Init(const char *path) {
 		sceClibSnprintf(metadata.genre, 31, "%s\n", opus_tags_query(tags, "genre", 0));
 	}
 
-	if ((opus_tags_query_count(tags, "METADATA_BLOCK_PICTURE") > 0) && (config.meta_opus)) {
-		metadata.has_meta = SCE_TRUE;
-
-		OpusPictureTag picture_tag = { 0 };
-		opus_picture_tag_init(&picture_tag);
-		const char* metadata_block = opus_tags_query(tags, "METADATA_BLOCK_PICTURE", 0);
-
-		int error = opus_picture_tag_parse(&picture_tag, metadata_block);
-		if (error == 0) {
-			if (picture_tag.type == 3) {
-				if (picture_tag.format == OP_PIC_FORMAT_JPEG)
-					metadata.cover_image = vita2d_load_JPEG_buffer(picture_tag.data, picture_tag.data_length);
-				else if (picture_tag.format == OP_PIC_FORMAT_PNG)
-					metadata.cover_image = vita2d_load_PNG_buffer(picture_tag.data);
-			}
-		}
-
-		opus_picture_tag_clear(&picture_tag);
-	}
-
 	return 0;
 }
 
