@@ -61,6 +61,9 @@ A homebrew music player for Playstation VITA that aims to support many different
 - Square: Repeat audio files in current directory.
 - Power Button: Turn off display and keep playing audio in background.
 
+**In background:**
+- Quick Menu: mixing volume adjustment.
+- Power Button: Turn off display and keep playing audio in background.
 
 # Credits:
 - joel16: [ElevenMPV](https://github.com/joel16/ElevenMPV)
