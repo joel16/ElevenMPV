@@ -5,9 +5,11 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/shellutil.h>
 #include <psp2/system_param.h>
+#include <psp2/power.h> 
 #include <string.h>
 
 #include "common.h"
+#include "vitaaudiolib.h"
 
 typedef struct SceAppMgrEvent { // size is 0x64
 	int event;						/* Event ID */
@@ -18,8 +20,8 @@ typedef struct SceAppMgrEvent { // size is 0x64
 int _sceAppMgrReceiveEvent(SceAppMgrEvent *appEvent);
 
 int isFG = SCE_TRUE;
+extern SceBool isSceShellUsed;
 
-static SceAppMgrEvent appEvent;
 static SceCtrlData pad, old_pad;
 static int lock_power = 0;
 static int finish_flag = SCE_FALSE;
@@ -35,7 +37,7 @@ void Utils_SetMin(int *set, int value, int min) {
 }
 
 int Utils_ReadControls(void) {
-	memset(&pad, 0, sizeof(SceCtrlData));
+	sceClibMemset(&pad, 0, sizeof(SceCtrlData));
 	sceCtrlPeekBufferPositive(0, &pad, 1);
 
 	pressed = pad.buttons & ~old_pad.buttons;
@@ -51,6 +53,7 @@ int Utils_AppStatusIsRunning(void)
 
 int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 {
+	SceAppMgrEvent appEvent;
 	while (SCE_TRUE) {
 		_sceAppMgrReceiveEvent(&appEvent);
 		switch (appEvent.event) {
@@ -61,10 +64,23 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 			isFG = SCE_FALSE;
 			break;
 		case 536870913: // destroy
-			/* sceAppMgrQuitForNonSuspendableApp(); */ //Doesn't work due to ksceSblACMgrIsNonGameProgram()
+			/* sceAppMgrQuitForNonSuspendableApp(); */ //Doesn't work due to """"ksceSblACMgrIsNonGameProgram()""""
 			finish_flag = SCE_TRUE;
 			break;
 		}
+		sceKernelDelayThread(10 * 1000);
+	}
+
+	return 0;
+}
+
+int Utils_VolumeWatchdog(SceSize argc, void* argv)
+{
+	int vol = 0;
+
+	while (SCE_TRUE) {
+		sceAppUtilSystemParamGetInt(9, &vol);
+		vitaAudioSetVolume(vol, vol);
 		sceKernelDelayThread(1000);
 	}
 
@@ -73,13 +89,16 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 
 int Utils_InitAppUtil(void) {
 
-	SceUID watchdog = sceKernelCreateThread("appStatusWatchdog", Utils_AppStatusWatchdog, 192, 0x1000, 0, 0, NULL);
-	sceKernelStartThread(watchdog, 0, NULL);
+	SceUID status_watchdog = sceKernelCreateThread("app_status_watchdog", Utils_AppStatusWatchdog, 191, 0x1000, 0, 0, NULL);
+	sceKernelStartThread(status_watchdog, 0, NULL);
+
+	SceUID volume_watchdog = sceKernelCreateThread("volume_watchdog", Utils_VolumeWatchdog, 191, 0x1000, 0, 0, NULL);
+	sceKernelStartThread(volume_watchdog, 0, NULL);
 
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;
-	memset(&init, 0, sizeof(SceAppUtilInitParam));
-	memset(&boot, 0, sizeof(SceAppUtilBootParam));
+	sceClibMemset(&init, 0, sizeof(SceAppUtilInitParam));
+	sceClibMemset(&boot, 0, sizeof(SceAppUtilBootParam));
 	
 	int ret = 0;
 	
@@ -156,7 +175,7 @@ static int power_tick_thread(SceSize args, void *argp) {
 
 void Utils_InitPowerTick(void) {
 	SceUID thid = 0;
-	if (R_SUCCEEDED(thid = sceKernelCreateThread("power_tick_thread", power_tick_thread, 192, 0x1000, 0, 0, NULL)))
+	if (R_SUCCEEDED(thid = sceKernelCreateThread("power_tick_thread", power_tick_thread, 191, 0x1000, 0, 0, NULL)))
 		sceKernelStartThread(thid, 0, NULL);
 }
 

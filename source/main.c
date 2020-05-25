@@ -1,6 +1,7 @@
 #include <psp2/appmgr.h>
 #include <psp2/io/stat.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/kernel/modulemgr.h> 
 #include <psp2/kernel/clib.h>
 #include <psp2/shellutil.h>
 #include <psp2/sysmodule.h>
@@ -17,9 +18,9 @@
 #include "touch.h"
 #include "utils.h"
 
-#define CLIB_HEAP_SIZE 1 * 1024 * 1024
+#define CLIB_HEAP_SIZE 1024 * 1024
 
-int _newlib_heap_size_user = 128 * 1024;
+int _newlib_heap_size_user = 1024 * 1024;
 void* mspace;
 
 int sceAppMgrAcquireBgmPortForMusicPlayer(void);
@@ -30,6 +31,8 @@ int main(int argc, char *argv[]) {
 	SceUID clib_heap = sceKernelAllocMemBlock("ClibHeap", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW_UNCACHE, CLIB_HEAP_SIZE, NULL);
 	sceKernelGetMemBlockBase(clib_heap, &clibm_base);
 	mspace = sceClibMspaceCreate(clibm_base, CLIB_HEAP_SIZE);
+
+	sceKernelLoadStartModule("vs0:sys/external/libc.suprx", 0, NULL, 0, NULL, NULL);
 
 	vita2d_clib_pass_mspace(mspace);
 	vita2d_init();
@@ -48,12 +51,9 @@ int main(int argc, char *argv[]) {
 	Touch_Init();
 
 	sceShellUtilInitEvents(0);
-	sceSysmoduleLoadModule(SCE_SYSMODULE_MUSIC_EXPORT);
 	Utils_InitPowerTick();
 
 	Menu_DisplayFiles();
-
-	sceSysmoduleUnloadModule(SCE_SYSMODULE_MUSIC_EXPORT);
 
 	Touch_Shutdown();
 	sceAppMgrReleaseBgmPort();

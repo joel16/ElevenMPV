@@ -1,20 +1,30 @@
 #include <psp2/kernel/threadmgr.h>
-#include <string.h>
+#include <psp2/kernel/clib.h>
 
 #include "vitaaudiolib.h"
 
 static int audio_ready = 0;
-static short vitaAudioSoundBuffer[VITA_NUM_AUDIO_CHANNELS][2][VITA_NUM_AUDIO_SAMPLES][2];
-static VITA_audio_channelinfo vitaAudioStatus[VITA_NUM_AUDIO_CHANNELS];
+static short vitaAudioSoundBuffer[2][VITA_NUM_AUDIO_SAMPLES][2];
+static VITA_audio_channelinfo vitaAudioStatus;
 static volatile int audio_terminate = 0;
 
-void vitaAudioSetVolume(int channel, int left, int right) {
-	vitaAudioStatus[channel].volumeleft = left;
-	vitaAudioStatus[channel].volumeright = right;
+extern SceBool isSceShellUsed;
+
+void vitaAudioSetVolume(int left, int right) {
+
+	int vol[2] = { left, right };
+
+	if (vol[0] > SCE_AUDIO_OUT_MAX_VOL)
+		vol[0] = SCE_AUDIO_OUT_MAX_VOL;
+
+	if (vol[1] > SCE_AUDIO_OUT_MAX_VOL)
+		vol[1] = SCE_AUDIO_OUT_MAX_VOL;
+
+	sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
 }
 
-void vitaAudioSetChannelCallback(int channel, vitaAudioCallback_t callback, void *userdata) {
-	volatile VITA_audio_channelinfo *pci = &vitaAudioStatus[channel];
+void vitaAudioSetChannelCallback(vitaAudioCallback_t callback, void *userdata) {
+	volatile VITA_audio_channelinfo *pci = &vitaAudioStatus;
 
 	if (callback == 0)
 		pci->callback = 0;
@@ -22,45 +32,30 @@ void vitaAudioSetChannelCallback(int channel, vitaAudioCallback_t callback, void
 		pci->callback = callback;
 }
 
-int vitaAudioOutBlocking(unsigned int channel, unsigned int vol1, unsigned int vol2, const void *buf) {
-	if (!audio_ready)
-		return(-1);
-
-	if (channel >= VITA_NUM_AUDIO_CHANNELS)
-		return(-1);
-
-	if (vol1 > SCE_AUDIO_OUT_MAX_VOL)
-		vol1 = SCE_AUDIO_OUT_MAX_VOL;
-
-	if (vol2 > SCE_AUDIO_OUT_MAX_VOL)
-		vol2 = SCE_AUDIO_OUT_MAX_VOL;
-
-	int vol[2] = {vol1, vol2};
-	sceAudioOutSetVolume(vitaAudioStatus[channel].handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
-	return sceAudioOutOutput(vitaAudioStatus[channel].handle, buf);
-}
-
 static int vitaAudioChannelThread(unsigned int args, void *argp) {
 	volatile int bufidx = 0;
-
-	int channel = *(int *) argp;
+	void *bufptr;
 
 	while (audio_terminate == 0) {
-		void *bufptr = &vitaAudioSoundBuffer[channel][bufidx];
-		vitaAudioCallback_t callback;
-		callback = vitaAudioStatus[channel].callback;
+		if (!isSceShellUsed) {
+			bufptr = &vitaAudioSoundBuffer[bufidx];
 
-		if (callback)
-			callback(bufptr, VITA_NUM_AUDIO_SAMPLES, vitaAudioStatus[channel].userdata);
-		else {
-			unsigned int *ptr = bufptr;
-			int i;
-			for (i = 0; i < VITA_NUM_AUDIO_SAMPLES; ++i)
-				*(ptr++) = 0;
+			if (vitaAudioStatus.callback) {
+				vitaAudioStatus.callback(bufptr, VITA_NUM_AUDIO_SAMPLES, vitaAudioStatus.userdata);
+			}
+			else {
+				unsigned int *ptr = bufptr;
+				int i;
+				for (i = 0; i < VITA_NUM_AUDIO_SAMPLES; ++i)
+					*(ptr++) = 0;
+			}
+
+			if (audio_ready)
+				sceAudioOutOutput(vitaAudioStatus.handle, bufptr);
+			bufidx = (bufidx ? 0 : 1);
 		}
-
-		vitaAudioOutBlocking(channel, vitaAudioStatus[channel].volumeleft, vitaAudioStatus[channel].volumeright, bufptr);
-		bufidx = (bufidx ? 0:1);
+		else
+			sceKernelDelayThread(100000);
 	}
 
 	sceKernelExitThread(0);
@@ -68,68 +63,41 @@ static int vitaAudioChannelThread(unsigned int args, void *argp) {
 }
 
 int vitaAudioInit(int frequency, SceAudioOutMode mode) {
-	int i, ret;
-	int failed = 0;
-	char str[32];
+	int ret = 0;
 
 	audio_terminate = 0;
 	audio_ready = 0;
 
-	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-		vitaAudioStatus[i].handle = -1;
-		vitaAudioStatus[i].threadhandle = -1;
-		vitaAudioStatus[i].volumeright = SCE_AUDIO_OUT_MAX_VOL;
-		vitaAudioStatus[i].volumeleft  = SCE_AUDIO_OUT_MAX_VOL;
-		vitaAudioStatus[i].callback = 0;
-		vitaAudioStatus[i].userdata = 0;
-	}
+	vitaAudioStatus.handle = -1;
+	vitaAudioStatus.threadhandle = -1;
+	vitaAudioStatus.callback = 0;
+	vitaAudioStatus.userdata = 0;
 
-	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-		if ((vitaAudioStatus[i].handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, VITA_NUM_AUDIO_SAMPLES, frequency, mode)) < 0)
-			failed = 1;
-	}
-
-	if (failed) {
-		for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-			if (vitaAudioStatus[i].handle != -1)
-				sceAudioOutReleasePort(vitaAudioStatus[i].handle);
-
-			vitaAudioStatus[i].handle = -1;
-		}
-
-		return 0;
+	if ((vitaAudioStatus.handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, VITA_NUM_AUDIO_SAMPLES, frequency, mode)) < 0) {
+		ret = -1;
+		goto error;
 	}
 
 	audio_ready = 1;
-	strcpy(str, "audiot0");
 
-	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-		str[6]= '0' + i;
-		vitaAudioStatus[i].threadhandle = sceKernelCreateThread(str, (SceKernelThreadEntry)&vitaAudioChannelThread, 0x40, 0x10000, 0, 0, NULL);
+	vitaAudioStatus.threadhandle = sceKernelCreateThread("ElevenMPVA_audioout", (SceKernelThreadEntry)&vitaAudioChannelThread, 64, 0x1000, 0, 0x80000, NULL);
 
-		if (vitaAudioStatus[i].threadhandle < 0) {
-			vitaAudioStatus[i].threadhandle = -1;
-			failed = 1;
-			break;
-		}
-
-		ret = sceKernelStartThread(vitaAudioStatus[i].threadhandle, sizeof(i), &i);
-
-		if (ret != 0) {
-			failed = 1;
-			break;
-		}
+	if (vitaAudioStatus.threadhandle < 0) {
+		vitaAudioStatus.threadhandle = -1;
+		ret = -1;
+		goto error;
 	}
 
-	if (failed) {
+	ret = sceKernelStartThread(vitaAudioStatus.threadhandle, 0, NULL);
+
+error:
+
+	if (ret < 0) {
 		audio_terminate = 1;
+		if (vitaAudioStatus.threadhandle != -1)
+			sceKernelDeleteThread(vitaAudioStatus.threadhandle);
 
-		for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-			if (vitaAudioStatus[i].threadhandle != -1)
-				sceKernelDeleteThread(vitaAudioStatus[i].threadhandle);
-
-			vitaAudioStatus[i].threadhandle = -1;
-		}
+		vitaAudioStatus.threadhandle = -1;
 
 		audio_ready = 0;
 		return 0;
@@ -144,21 +112,16 @@ void vitaAudioEndPre(void) {
 }
 
 void vitaAudioEnd(void) {
-	int i = 0;
 	audio_ready = 0;
 	audio_terminate = 1;
 
-	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-		if (vitaAudioStatus[i].threadhandle != -1)
-			sceKernelDeleteThread(vitaAudioStatus[i].threadhandle);
+	if (vitaAudioStatus.threadhandle != -1)
+		sceKernelDeleteThread(vitaAudioStatus.threadhandle);
 
-		vitaAudioStatus[i].threadhandle = -1;
-	}
+	vitaAudioStatus.threadhandle = -1;
 
-	for (i = 0; i < VITA_NUM_AUDIO_CHANNELS; i++) {
-		if (vitaAudioStatus[i].handle != -1) {
-			sceAudioOutReleasePort(vitaAudioStatus[i].handle);
-			vitaAudioStatus[i].handle = -1;
+	if (vitaAudioStatus.handle != -1) {
+		sceAudioOutReleasePort(vitaAudioStatus.handle);
+		vitaAudioStatus.handle = -1;
 		}
-	}
 }

@@ -1,9 +1,14 @@
+#include <psp2/kernel/clib.h>
 #include <ctype.h>
 #include <FLAC/metadata.h>
 
 #include "audio.h"
 #include "config.h"
+#include "touch.h"
 #define DR_FLAC_IMPLEMENTATION
+#define DRFLAC_ARM
+#define DRFLAC_SUPPORT_NEON
+#define DR_FLAC_NO_OGG
 #include "dr_flac.h"
 
 static drflac *flac;
@@ -19,34 +24,34 @@ int FLAC_Init(const char *path) {
 		for (int i = 0; i < tags->data.vorbis_comment.num_comments; i++)  {
 			char *tag = (char *)tags->data.vorbis_comment.comments[i].entry;
 
-			if (!strncasecmp("TITLE=", tag, 6)) {
+			if (!sceClibStrncasecmp("TITLE=", tag, 6)) {
 				metadata.has_meta = SCE_TRUE;
-				snprintf(metadata.title, 31, "%s\n", tag + 6);
+				sceClibSnprintf(metadata.title, 31, "%s\n", tag + 6);
 			}
 
-			if (!strncasecmp("ALBUM=", tag, 6)) {
+			if (!sceClibStrncasecmp("ALBUM=", tag, 6)) {
 				metadata.has_meta = SCE_TRUE;
-				snprintf(metadata.album, 31, "%s\n", tag + 6);
+				sceClibSnprintf(metadata.album, 31, "%s\n", tag + 6);
 			}
 
-			if (!strncasecmp("ARTIST=", tag, 7)) {
+			if (!sceClibStrncasecmp("ARTIST=", tag, 7)) {
 				metadata.has_meta = SCE_TRUE;
-				snprintf(metadata.artist, 31, "%s\n", tag + 7);
+				sceClibSnprintf(metadata.artist, 31, "%s\n", tag + 7);
 			}
 
-			if (!strncasecmp("DATE=", tag, 5)) {
+			if (!sceClibStrncasecmp("DATE=", tag, 5)) {
 				metadata.has_meta = SCE_TRUE;
-				snprintf(metadata.year, 31, "%d\n", atoi(tag + 5));
+				sceClibSnprintf(metadata.year, 31, "%d\n", atoi(tag + 5));
 			}
 
-			if (!strncasecmp("COMMENT=", tag, 8)) {
+			if (!sceClibStrncasecmp("COMMENT=", tag, 8)) {
 				metadata.has_meta = SCE_TRUE;
-				snprintf(metadata.comment, 31, "%s\n", tag + 8);
+				sceClibSnprintf(metadata.comment, 31, "%s\n", tag + 8);
 			}
 
-			if (!strncasecmp("GENRE=", tag, 6)) {
+			if (!sceClibStrncasecmp("GENRE=", tag, 6)) {
 				metadata.has_meta = SCE_TRUE;
-				snprintf(metadata.genre, 31, "%s\n", tag + 6);
+				sceClibSnprintf(metadata.genre, 31, "%s\n", tag + 6);
 			}
 		}
 	}
@@ -101,7 +106,7 @@ SceUInt64 FLAC_GetLength(void) {
 }
 
 SceUInt64 FLAC_Seek(SceUInt64 index) {
-	drflac_uint64 seek_frame = (flac->totalPCMFrameCount * (index / 450.0));
+	drflac_uint64 seek_frame = (flac->totalPCMFrameCount * (index / SEEK_WIDTH_FLOAT));
 	
 	if (drflac_seek_to_pcm_frame(flac, seek_frame) == DRFLAC_TRUE) {
 		frames_read = seek_frame;

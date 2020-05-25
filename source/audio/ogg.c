@@ -1,10 +1,11 @@
 #include <psp2/io/fcntl.h>
-#include <string.h>
+#include <psp2/kernel/clib.h>
 #include <vorbis/codec.h>
 #include <vorbis/vorbisfile.h>
 
 #include "audio.h"
 #include "common.h"
+#include "touch.h"
 
 static OggVorbis_File ogg;
 static SceUID ogg_file = 0;
@@ -54,22 +55,22 @@ int OGG_Init(const char *path) {
 		char *value = NULL;
 
 		if ((value = vorbis_comment_query(comment, "title", 0)) != NULL)
-			snprintf(metadata.title, 31, "%s\n", value);
+			sceClibSnprintf(metadata.title, 31, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "album", 0)) != NULL)
-			snprintf(metadata.album, 31, "%s\n", value);
+			sceClibSnprintf(metadata.album, 31, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "artist", 0)) != NULL)
-			snprintf(metadata.artist, 31, "%s\n", value);
+			sceClibSnprintf(metadata.artist, 31, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "year", 0)) != NULL)
-			snprintf(metadata.year, 5, "%s\n", value);
+			sceClibSnprintf(metadata.year, 5, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "comment", 0)) != NULL)
-			snprintf(metadata.comment, 31, "%s\n", value);
+			sceClibSnprintf(metadata.comment, 31, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "genre", 0)) != NULL)
-			snprintf(metadata.genre, 31, "%s\n", value);
+			sceClibSnprintf(metadata.genre, 31, "%s\n", value);
 	}
 
 	return 0;
@@ -121,7 +122,7 @@ SceUInt64 OGG_GetLength(void) {
 }
 
 SceUInt64 OGG_Seek(SceUInt64 index) {
-	ogg_int64_t seek_sample = (max_lenth * (index / 450.0));
+	ogg_int64_t seek_sample = (max_lenth * (index / SEEK_WIDTH_FLOAT));
 	
 	if (ov_pcm_seek(&ogg, seek_sample) >= 0) {
 		samples_read = seek_sample;

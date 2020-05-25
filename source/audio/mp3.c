@@ -1,9 +1,17 @@
 #include <mpg123.h>
-#include <stdio.h>
 #include <string.h>
+#include <psp2/kernel/clib.h>
+#include <psp2/io/fcntl.h>
+#include <shellaudio.h>
 
 #include "audio.h"
 #include "config.h"
+#include "touch.h"
+
+int sceAppMgrAcquireBgmPortForMusicPlayer(void);
+
+extern SceBool playing;
+extern SceShellSvcAudioPlaybackStatus pb_stats;
 
 // For MP3 ID3 tags
 struct genre {
@@ -30,10 +38,7 @@ struct genre genreList[] = {
 	{141 , "Christian Rock"}, {142 , "Merengue"}, {143 , "Salsa"}, {144 , "Thrash Metal"}, {145 , "Anime"}, {146 , "JPop"}, {147 , "SynthPop"}
 };
 
-static mpg123_handle *mp3;
-static off_t frames_read = 0, total_samples = 0;
-static long sample_rate = 0;
-static int channels = 0;
+static unsigned int time_read = 0, total_time = 0;
 
 // For MP3 ID3 tags
 // Helper for v1 printing, get these strings their zero byte.
@@ -41,9 +46,9 @@ static void safe_print(char *tag, char *name, char *data, size_t size) {
 	char safe[31];
 	if (size > 30) 
 		return;
-	memcpy(safe, data, size);
+	sceClibMemcpy(safe, data, size);
 	safe[size] = 0;
-	snprintf(tag, 34, "%s: %s\n", name, safe);
+	sceClibSnprintf(tag, 34, "%s: %s\n", name, safe);
 }
 
 // For MP3 ID3 tags
@@ -88,9 +93,9 @@ static void print_lines(char *data, const char *prefix, mpg123_string *inlines) 
 			if (line) {
 				lines[i] = 0;
 				if (data == NULL)
-					printf("%s%s\n", prefix, line);
+					sceClibPrintf("%s%s\n", prefix, line);
 				else
-					snprintf(data, 64, "%s%s\n", prefix, line);
+					sceClibSnprintf(data, 64, "%s%s\n", prefix, line);
 				line = NULL;
 				lines[i] = save;
 			}
@@ -114,7 +119,13 @@ static void print_v2(Audio_Metadata *ID3tag, mpg123_id3v2 *v2) {
 	print_lines(ID3tag->genre, "",   v2->genre);
 }
 
-int MP3_Init(const char *path) {
+int MP3_Init(char *path) {
+
+	mpg123_handle *mp3;
+	sceClibMemset(&pb_stats, 0, sizeof(SceShellSvcAudioPlaybackStatus));
+
+	sceAppMgrReleaseBgmPort();
+
 	int error = mpg123_init();
 	if (error != MPG123_OK)
 		return error;
@@ -123,24 +134,22 @@ int MP3_Init(const char *path) {
 	if (error != MPG123_OK)
 		return error;
 
-	error = mpg123_param(mp3, MPG123_FLAGS, MPG123_FORCE_SEEKABLE | MPG123_FUZZY | MPG123_SEEKBUFFER | MPG123_GAPLESS, 0.0);
-	if (error != MPG123_OK)
-		return error;
-
-	// Let the seek index auto-grow and contain an entry for every frame
-	error = mpg123_param(mp3, MPG123_INDEX_SIZE, -1, 0.0);
-	if (error != MPG123_OK)
-		return error;
-
-	error = mpg123_param(mp3, MPG123_ADD_FLAGS, MPG123_PICTURE, 0.0);
-	if (error != MPG123_OK)
-		return error;
-
 	error = mpg123_open(mp3, path);
 	if (error != MPG123_OK)
 		return error;
 
-	mpg123_seek(mp3, 0, SEEK_SET);
+	error = shellAudioInitializeForMusicPlayer(0);
+	if (error < 0)
+		return error;
+
+	error = shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);
+	if (error < 0)
+		return error;
+
+	error = shellAudioSetAudioForMusicPlayer(path, NULL);
+	if (error < 0)
+		return error;
+
 	metadata.has_meta = mpg123_meta_check(mp3);
 
 	mpg123_id3v1 *v1;
@@ -149,81 +158,60 @@ int MP3_Init(const char *path) {
 	if (metadata.has_meta & MPG123_ID3 && mpg123_id3(mp3, &v1, &v2) == MPG123_OK) {
 		if (v1 != NULL)
 			print_v1(&metadata, v1);
-		if (v2 != NULL) {
+		if (v2 != NULL)
 			print_v2(&metadata, v2);
-
-			if (config.meta_mp3) {
-				for (size_t count = 0; count < v2->pictures; count++) {
-					mpg123_picture *pic = &v2->picture[count];
-					char *str = pic->mime_type.p;
-
-					if ((pic->type == 3 ) || (pic->type == 0)) {
-						if ((!strcasecmp(str, "image/jpg")) || (!strcasecmp(str, "image/jpeg"))) {
-							metadata.cover_image = vita2d_load_JPEG_buffer(pic->data, pic->size);
-							break;
-						}
-						else if (!strcasecmp(str, "image/png")) {
-							metadata.cover_image = vita2d_load_PNG_buffer(pic->data);
-							break;
-						}
-					}
-				}
-			}
-		}
 	}
 
-	mpg123_getformat(mp3, &sample_rate, &channels, NULL);
-	mpg123_format_none(mp3);
-	mpg123_format(mp3, sample_rate, channels, MPG123_ENC_SIGNED_16);
-	total_samples = mpg123_length(mp3);
+	mpg123_close(mp3);
+	mpg123_delete(mp3);
+	mpg123_exit();
+
+	shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_PLAY, 0);
+
+	//Wait until SceShell is ready
+	pb_stats.currentState = SCE_SHELLAUDIO_STOP;
+	while (pb_stats.currentState == SCE_SHELLAUDIO_STOP) {
+		shellAudioGetPlaybackStatusForMusicPlayer(&pb_stats);
+	}
+
+	SceShellSvcAudioMetadata data;
+	shellAudioGetMetadataForMusicPlayer(&data);
+	total_time = data.duration;
+
 	return 0;
 }
 
-SceUInt32 MP3_GetSampleRate(void) {
-	return sample_rate;
-}
-
-SceUInt8 MP3_GetChannels(void) {
-	return channels;
-}
-
-void MP3_Decode(void *buf, unsigned int length, void *userdata) {
-	int ret = 0;
-	size_t done = 0;
-
-	ret = mpg123_read(mp3, buf, length * (sizeof(SceInt16) * 2), &done);
-	frames_read = mpg123_tell(mp3);
-
-	if (frames_read >= total_samples || ret == MPG123_DONE)
-		playing = SCE_FALSE;
-}
-
 SceUInt64 MP3_GetPosition(void) {
-	return frames_read;
+	shellAudioGetPlaybackStatusForMusicPlayer(&pb_stats);
+	time_read = pb_stats.currentTime;
+	if (pb_stats.currentState == SCE_SHELLAUDIO_STOP && pb_stats.currentTime == 0)
+		playing = SCE_FALSE;
+	//This is to prevent audio from stopping when power button is pressed
+	if (pb_stats.currentState == SCE_SHELLAUDIO_STOP && playing && !paused)
+		shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_PLAY, 0);
+
+	return time_read;
 }
 
 SceUInt64 MP3_GetLength(void) {
-	return total_samples;
+	return total_time;
 }
 
 SceUInt64 MP3_Seek(SceUInt64 index) {
-	off_t seek_frame = (total_samples * (index / 450.0));
-	
-	if (mpg123_seek(mp3, seek_frame, SEEK_SET) >= 0) {
-		frames_read = seek_frame;
-		return frames_read;
-	}
+	unsigned int seek_frame = (total_time * (index / SEEK_WIDTH_FLOAT));
+	shellAudioSetSeekTimeForMusicPlayer(seek_frame);
+	shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_SEEK, 0);
 
 	return -1;
 }
 
 void MP3_Term(void) {
-	frames_read = 0;
-	
+	time_read = 0;
+
 	if (metadata.has_meta)
 		metadata.has_meta = SCE_FALSE;
-	
-	mpg123_close(mp3);
-	mpg123_delete(mp3);
-	mpg123_exit();
+
+	shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);
+	shellAudioFinishForMusicPlayer();
+	sceAppMgrAcquireBgmPortForMusicPlayer();
 }

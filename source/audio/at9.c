@@ -10,8 +10,8 @@ extern SceShellSvcAudioPlaybackStatus pb_stats;
 
 static unsigned int time_read = 0, total_time = 0;
 
-int WAV_Init(char *path) {
-
+int AT9_Init(char *path) {
+	
 	int error = 0;
 
 	sceClibMemset(&pb_stats, 0, sizeof(SceShellSvcAudioPlaybackStatus));
@@ -31,11 +31,13 @@ int WAV_Init(char *path) {
 		return error;
 
 	shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_PLAY, 0);
+
 	//Wait until SceShell is ready
 	pb_stats.currentState = SCE_SHELLAUDIO_STOP;
 	while (pb_stats.currentState == SCE_SHELLAUDIO_STOP) {
 		shellAudioGetPlaybackStatusForMusicPlayer(&pb_stats);
 	}
+
 	SceShellSvcAudioMetadata data;
 	shellAudioGetMetadataForMusicPlayer(&data);
 	total_time = data.duration;
@@ -43,7 +45,7 @@ int WAV_Init(char *path) {
 	return 0;
 }
 
-SceUInt64 WAV_GetPosition(void) {
+SceUInt64 AT9_GetPosition(void) {
 	shellAudioGetPlaybackStatusForMusicPlayer(&pb_stats);
 	time_read = pb_stats.currentTime;
 	if (pb_stats.currentState == SCE_SHELLAUDIO_STOP && pb_stats.currentTime == 0) {
@@ -56,11 +58,11 @@ SceUInt64 WAV_GetPosition(void) {
 	return time_read;
 }
 
-SceUInt64 WAV_GetLength(void) {
+SceUInt64 AT9_GetLength(void) {
 	return total_time;
 }
 
-SceUInt64 WAV_Seek(SceUInt64 index) {
+SceUInt64 AT9_Seek(SceUInt64 index) {
 	unsigned int seek_frame = (total_time * (index / SEEK_WIDTH_FLOAT));
 	shellAudioSetSeekTimeForMusicPlayer(seek_frame);
 	shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_SEEK, 0);
@@ -68,7 +70,7 @@ SceUInt64 WAV_Seek(SceUInt64 index) {
 	return -1;
 }
 
-void WAV_Term(void) {
+void AT9_Term(void) {
 	time_read = 0;
 	
 	shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);

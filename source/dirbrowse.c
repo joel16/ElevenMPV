@@ -130,7 +130,7 @@ void Dirbrowse_DisplayFiles(void) {
 	vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 25, cwd);
 
 	if (!(!sceClibStrcmp(cwd, root_path)))
-		vita2d_draw_texture(icon_back, 25, 54);
+		vita2d_draw_texture(icon_back, BTN_BACK_X, BTN_TOPBAR_Y);
 
 	int i = 0, printed = 0;
 	File *file = files; // Draw file list
@@ -147,7 +147,8 @@ void Dirbrowse_DisplayFiles(void) {
 				vita2d_draw_texture(icon_dir, 15, 117 + (72 * printed));
 			else if ((!sceClibStrncasecmp(file->ext, "flac", 4)) || (!sceClibStrncasecmp(file->ext, "it", 4)) || (!sceClibStrncasecmp(file->ext, "mod", 4))
 				|| (!sceClibStrncasecmp(file->ext, "mp3", 4)) || (!sceClibStrncasecmp(file->ext, "ogg", 4)) || (!sceClibStrncasecmp(file->ext, "opus", 4))
-				|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4)))
+				|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4))
+				|| (!sceClibStrncasecmp(file->ext, "at9", 4)) || (!sceClibStrncasecmp(file->ext, "m4a", 4)) || (!sceClibStrncasecmp(file->ext, "aac", 4)))
 				vita2d_draw_texture(icon_audio, 15, 117 + (72 * printed));
 			else
 				vita2d_draw_texture(icon_file, 15, 117 + (72 * printed));
@@ -193,7 +194,8 @@ void Dirbrowse_OpenFile(void) {
 	}
 	else if ((!sceClibStrncasecmp(file->ext, "flac", 4)) || (!sceClibStrncasecmp(file->ext, "it", 4)) || (!sceClibStrncasecmp(file->ext, "mod", 4))
 		|| (!sceClibStrncasecmp(file->ext, "mp3", 4)) || (!sceClibStrncasecmp(file->ext, "ogg", 4)) || (!sceClibStrncasecmp(file->ext, "opus", 4))
-		|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4)))
+		|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4))
+		|| (!sceClibStrncasecmp(file->ext, "at9", 4)) || (!sceClibStrncasecmp(file->ext, "m4a", 4)) || (!sceClibStrncasecmp(file->ext, "aac", 4)))
 		Menu_PlayAudio(path);
 }
 

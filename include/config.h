@@ -9,6 +9,7 @@ typedef struct {
 	SceBool meta_opus;
 	int sort;
 	int alc_mode;
+	int eq_mode;
 	int device;
 } config_t;
 

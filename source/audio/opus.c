@@ -1,7 +1,8 @@
-#include <string.h>
+#include <psp2/kernel/clib.h>
 
 #include "audio.h"
 #include "config.h"
+#include "touch.h"
 #include "opus/opusfile.h"
 
 static OggOpusFile *opus;
@@ -22,32 +23,32 @@ int OPUS_Init(const char *path) {
 
 	if (opus_tags_query_count(tags, "title") > 0) {
 		metadata.has_meta = SCE_TRUE;
-		snprintf(metadata.title, 31, "%s\n", opus_tags_query(tags, "title", 0));
+		sceClibSnprintf(metadata.title, 31, "%s\n", opus_tags_query(tags, "title", 0));
 	}
 
 	if (opus_tags_query_count(tags, "album") > 0) {
 		metadata.has_meta = SCE_TRUE;
-		snprintf(metadata.album, 31, "%s\n", opus_tags_query(tags, "album", 0));
+		sceClibSnprintf(metadata.album, 31, "%s\n", opus_tags_query(tags, "album", 0));
 	}
 
 	if (opus_tags_query_count(tags, "artist") > 0) {
 		metadata.has_meta = SCE_TRUE;
-		snprintf(metadata.artist, 31, "%s\n", opus_tags_query(tags, "artist", 0));
+		sceClibSnprintf(metadata.artist, 31, "%s\n", opus_tags_query(tags, "artist", 0));
 	}
 
 	if (opus_tags_query_count(tags, "date") > 0) {
 		metadata.has_meta = SCE_TRUE;
-		snprintf(metadata.year, 11, "%s\n", opus_tags_query(tags, "date", 0));
+		sceClibSnprintf(metadata.year, 11, "%s\n", opus_tags_query(tags, "date", 0));
 	}
 
 	if (opus_tags_query_count(tags, "comment") > 0) {
 		metadata.has_meta = SCE_TRUE;
-		snprintf(metadata.comment, 31, "%s\n", opus_tags_query(tags, "comment", 0));
+		sceClibSnprintf(metadata.comment, 31, "%s\n", opus_tags_query(tags, "comment", 0));
 	}
 
 	if (opus_tags_query_count(tags, "genre") > 0) {
 		metadata.has_meta = SCE_TRUE;
-		snprintf(metadata.genre, 31, "%s\n", opus_tags_query(tags, "genre", 0));
+		sceClibSnprintf(metadata.genre, 31, "%s\n", opus_tags_query(tags, "genre", 0));
 	}
 
 	if ((opus_tags_query_count(tags, "METADATA_BLOCK_PICTURE") > 0) && (config.meta_opus)) {
@@ -100,7 +101,7 @@ SceUInt64 OPUS_GetLength(void) {
 
 SceUInt64 OPUS_Seek(SceUInt64 index) {
 	if (op_seekable(opus) >= 0) {
-		ogg_int64_t seek_sample = (max_samples * (index / 450.0));
+		ogg_int64_t seek_sample = (max_samples * (index / SEEK_WIDTH_FLOAT));
 	
 		if (op_pcm_seek(opus, seek_sample) >= 0) {
 			samples_read = seek_sample;

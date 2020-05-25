@@ -1,0 +1,11 @@
+version: 2
+firmware: 3.60
+modules:
+  SceShellSvc:
+    nid: 0x36E557FA
+    libraries:
+      SceShellSvc:
+        kernel: false
+        nid: 0x773242C7
+        functions:
+          SceShellSvc_B31E7F1C: 0xB31E7F1C

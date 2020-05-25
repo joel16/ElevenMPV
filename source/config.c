@@ -7,7 +7,7 @@
 #include "config.h"
 #include "fs.h"
 
-#define CONFIG_VERSION 1
+#define CONFIG_VERSION 3
 
 config_t config;
 static int config_version_holder = 0;
@@ -21,6 +21,7 @@ const char *config_file =
 	"metadata_opus = %d\n"
 	"sort = %d\n"
 	"alc_mode = %d\n"
+	"eq_mode = %d\n"
 	"device = %d";
 
 int Config_Save(config_t config) {
@@ -28,7 +29,7 @@ int Config_Save(config_t config) {
 	
 	char *buf = sceClibMspaceMalloc(mspace, 128);
 	int len = sceClibSnprintf(buf, 128, config_file, CONFIG_VERSION, config.meta_flac, config.meta_mp3, config.meta_opus, config.sort, 
-		config.alc_mode, config.device);
+		config.alc_mode, config.eq_mode, config.device);
 	
 	if (R_FAILED(ret = FS_WriteFile("savedata0:config.cfg", buf, len))) {
 		sceClibMspaceFree(mspace, buf);
@@ -49,6 +50,7 @@ int Config_Load(void) {
 		config.meta_opus = SCE_TRUE;
 		config.sort = 0;
 		config.alc_mode = 0;
+		config.eq_mode = 0;
 		config.device = 0;
 		return Config_Save(config);
 	}
@@ -64,7 +66,7 @@ int Config_Load(void) {
 
 	buf[size] = '\0';
 	sscanf(buf, config_file, &config_version_holder, &config.meta_flac, &config.meta_mp3, &config.meta_opus, &config.sort, 
-		&config.alc_mode, &config.device);
+		&config.alc_mode, &config.eq_mode, &config.device);
 	sceClibMspaceFree(mspace, buf);
 
 	// Delete config file if config file is updated. This will rarely happen.
@@ -75,6 +77,7 @@ int Config_Load(void) {
 		config.meta_opus = SCE_TRUE;
 		config.sort = 0;
 		config.alc_mode = 0;
+		config.eq_mode = 0;
 		config.device = 0;
 		return Config_Save(config);
 	}

@@ -8,44 +8,24 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
+include("$ENV{DOLCESDK}/share/dolce.cmake" REQUIRED)
+
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
-  COMMAND dolce-make-bootparam app_memsize 0x4000 attribute 0x02 ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
+  COMMAND dolce-make-bootparam app_memsize 0x4000 attribute 0x08 ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin
 )
 
 project(ElevenMPV)
-include("${DOLCESDK}/share/dolce.cmake" REQUIRED)
+dolce_gen_libs(SceShellSvc_stubs
+  SceShellSvc.yml
+  LIB SceShellSvc_stub_weak)
 
 set(VITA_APP_NAME "Eleven Music Player")
 set(VITA_TITLEID  "ELEVENMPV")
-set(VITA_VERSION  "02.21")
+set(VITA_VERSION  "03.00")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -Wall -Werror")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
-FUNCTION(ADD_RESOURCES out_var)
-  SET(result)
-  FOREACH(in_f ${ARGN})
-    SET(out_f "${CMAKE_CURRENT_BINARY_DIR}/${in_f}.o")
-    GET_FILENAME_COMPONENT(out_dir ${out_f} DIRECTORY)
-    ADD_CUSTOM_COMMAND(OUTPUT ${out_f}
-      COMMAND ${CMAKE_COMMAND} -E make_directory ${out_dir}
-      COMMAND ${CMAKE_LINKER} -r -b binary -o ${out_f} ${in_f}
-      DEPENDS ${in_f}
-      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-      COMMENT "Building resource ${out_f}"
-      VERBATIM
-      )
-    LIST(APPEND result ${out_f})
-  ENDFOREACH()
-  SET(${out_var} "${result}" PARENT_SCOPE)
-ENDFUNCTION()
-
-file(GLOB res_files RELATIVE
-  ${CMAKE_SOURCE_DIR}
-  res/*.png
-)
-add_resources(elevenmp_res ${res_files})
 
 include_directories(
   libs/include
@@ -60,7 +40,6 @@ link_directories(
 )
 
 add_executable(${PROJECT_NAME}
-  ${elevenmp_res}
   source/common.c
   source/config.c
   source/dirbrowse.c
@@ -77,18 +56,20 @@ add_executable(${PROJECT_NAME}
   source/audio/vitaaudiolib.c
   source/audio/wav.c
   source/audio/xm.c
+  source/audio/aac.c
+  source/audio/at9.c
   source/menus/menu_audioplayer.c
   source/menus/menu_displayfiles.c
   source/menus/menu_settings.c
 )
 
 target_link_libraries(${PROJECT_NAME}
+  ShellAudio
   vita2d_sys
   freetype
   png
   SceJpeg_stub
   z
-  c
   FLAC
   opusfile
   opus
@@ -102,7 +83,6 @@ target_link_libraries(${PROJECT_NAME}
   SceAppUtil_stub
   SceAudio_stub
   SceAudiodec_stub
-  SceCommonDialog_stub
   SceCtrl_stub
   SceDisplay_stub
   SceGxm_stub
@@ -111,9 +91,13 @@ target_link_libraries(${PROJECT_NAME}
   SceShellSvc_stub
   SceSysmodule_stub
   SceTouch_stub
+  SceFios2_stub
+  SceShellSvc_stub_weak
+  SceSystemGesture_stub
+  SceAVConfig_stub
 )
 
-set(DOLCE_MKSFOEX_FLAGS "${DOLCE_MKSFOEX_FLAGS} -d ATTRIBUTE=17731976 -s CATEGORY=gdc" -d PARENTAL_LEVEL=1)
+set(DOLCE_MKSFOEX_FLAGS "${DOLCE_MKSFOEX_FLAGS} -d ATTRIBUTE=17338760 -s CATEGORY=gdc" -d PARENTAL_LEVEL=1)
 
 dolce_create_self(${PROJECT_NAME}.self ${PROJECT_NAME} UNSAFE BOOT_PARAM ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin)
 dolce_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
@@ -124,4 +108,5 @@ dolce_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
   FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
   FILE sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
   FILE res/Roboto-Regular.ttf Roboto-Regular.ttf
+  FILE res/data.psarc data.psarc
 )
