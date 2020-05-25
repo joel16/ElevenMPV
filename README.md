@@ -9,37 +9,38 @@ A homebrew music player for Playstation VITA that aims to support many different
 
 # Limitations:
 
-1. Cover art support is temporary disabled.
-2. Some performance issues may occur.
-
-# Coming soon:
-
-1. Switch to hardware decoding when possible
-2. Controls from Quick Menu
-3. ATRAC9 support
-4. M4A, AAC support
-5. More...
+1. No cover art due to extreme RAM constraints
+2. Some performance issues for software decoding may occur.
 
 # Currently supported formats: (16 bit signed samples)
+
+## Hardware decoding (flawless performance):
+- MP3
+- ATRAC9
+- WAV
+- M4A/AAC
+
+## Software decoding:
 - FLAC
 - IT
 - MOD
-- MP3 
 - OGG
 - OPUS
 - S3M
-- WAV (A-law and u-law, Microsoft ADPCM, IMA ADPCM)
 - XM
 
 
 # Features:
-- Browse ux0:/, ur0:/ and uma0:/ to play the above audio formats.
+- Browse ux0:/, ur0:/, uma0:/, xmc0:/, grw0:/ to play the above audio formats.
+- BG playback.
 - Pause/Play audio.
-- Shuffle/Repeat audio.
+- Shuffle/Repeat/Repeat All.
+- Equalizer.
+- ALC.
 - Next/Previous track in current working directory.
 - Display ID3v1 and ID3v2 metadata for MP3 files. Other tags are displayed for OGG, FLAC, OPUS and XM.
-- Basic touch support.
-- Seeking support using touch screen. (No support for OPUS)
+- Touch support.
+- Seeking support using touch screen. (No support for OPUS).
 
 
 # Controls:
@@ -50,7 +51,7 @@ A homebrew music player for Playstation VITA that aims to support many different
 - DPAD Up/Down: Navigate files.
 - DPAD Left/Right: Top/Bottom of list.
 
-**In audio player: (Note: you can use touch controls here or the following buttons below)**
+**In audio player:**
 
 - Enter button (cross/circle): Play/Pause.
 - Cancel button (cross/circle): Return to file manager.
@@ -59,7 +60,6 @@ A homebrew music player for Playstation VITA that aims to support many different
 - Triangle: Shuffle audio files in current directory.
 - Square: Repeat audio files in current directory.
 - Power Button: Turn off display and keep playing audio in background.
-- Touch: Touch anywhere on the progress bar to seek to that location.
 
 
 # Credits:
