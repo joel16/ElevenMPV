@@ -2,13 +2,14 @@
 #include <psp2/kernel/clib.h>
 
 #include "vitaaudiolib.h"
+#include "utils.h"
 
 static int audio_ready = 0;
 static short vitaAudioSoundBuffer[2][VITA_NUM_AUDIO_SAMPLES][2];
 static VITA_audio_channelinfo vitaAudioStatus;
 static volatile int audio_terminate = 0;
 
-extern SceBool isSceShellUsed;
+extern SceUID event_flag_uid;
 
 void vitaAudioSetVolume(int left, int right) {
 
@@ -37,25 +38,22 @@ static int vitaAudioChannelThread(unsigned int args, void *argp) {
 	void *bufptr;
 
 	while (audio_terminate == 0) {
-		if (!isSceShellUsed) {
-			bufptr = &vitaAudioSoundBuffer[bufidx];
+		sceKernelWaitEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED, SCE_KERNEL_EVF_WAITMODE_AND, NULL, NULL);
+		bufptr = &vitaAudioSoundBuffer[bufidx];
 
-			if (vitaAudioStatus.callback) {
-				vitaAudioStatus.callback(bufptr, VITA_NUM_AUDIO_SAMPLES, vitaAudioStatus.userdata);
-			}
-			else {
-				unsigned int *ptr = bufptr;
-				int i;
-				for (i = 0; i < VITA_NUM_AUDIO_SAMPLES; ++i)
-					*(ptr++) = 0;
-			}
-
-			if (audio_ready)
-				sceAudioOutOutput(vitaAudioStatus.handle, bufptr);
-			bufidx = (bufidx ? 0 : 1);
+		if (vitaAudioStatus.callback) {
+			vitaAudioStatus.callback(bufptr, VITA_NUM_AUDIO_SAMPLES, vitaAudioStatus.userdata);
 		}
-		else
-			sceKernelDelayThread(100000);
+		else {
+			unsigned int *ptr = bufptr;
+			int i;
+			for (i = 0; i < VITA_NUM_AUDIO_SAMPLES; ++i)
+				*(ptr++) = 0;
+		}
+
+		if (audio_ready)
+			sceAudioOutOutput(vitaAudioStatus.handle, bufptr);
+		bufidx = (bufidx ? 0 : 1);
 	}
 
 	sceKernelExitThread(0);
@@ -80,7 +78,7 @@ int vitaAudioInit(int frequency, SceAudioOutMode mode) {
 
 	audio_ready = 1;
 
-	vitaAudioStatus.threadhandle = sceKernelCreateThread("ElevenMPVA_audioout", (SceKernelThreadEntry)&vitaAudioChannelThread, 64, 0x1000, 0, 0x80000, NULL);
+	vitaAudioStatus.threadhandle = sceKernelCreateThread("ElevenMPVA_audioout", (SceKernelThreadEntry)&vitaAudioChannelThread, 0x100000E0, 0x10000, 0, 0x80000, NULL);
 
 	if (vitaAudioStatus.threadhandle < 0) {
 		vitaAudioStatus.threadhandle = -1;

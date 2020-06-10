@@ -1,5 +1,4 @@
 #include <psp2/kernel/clib.h>
-#include <ctype.h>
 #include <FLAC/metadata.h>
 
 #include "audio.h"

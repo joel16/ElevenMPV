@@ -1,13 +1,23 @@
 #include <psp2/apputil.h>
 #include <psp2/io/dirent.h>
+#include <psp2/system_param.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/kernel/processmgr.h>
+#include <psp2/notificationutil.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/sysmodule.h> 
 #include <psp2/shellutil.h>
-#include <psp2/system_param.h>
 #include <psp2/power.h> 
-#include <string.h>
+#include <psp2/ime.h> 
+#include <psp2/appmgr.h> 
+#include <psp2/libc.h>
+#include <shellaudio.h> 
+#include <taihen.h>
 
+#include "utils.h"
+#include "config.h"
+#include "touch.h"
+#include "audio.h"
 #include "common.h"
 #include "vitaaudiolib.h"
 
@@ -18,13 +28,18 @@ typedef struct SceAppMgrEvent { // size is 0x64
 } SceAppMgrEvent;
 
 int _sceAppMgrReceiveEvent(SceAppMgrEvent *appEvent);
+int sceAppMgrQuitForNonSuspendableApp(void);
+int sceAppMgrAcquireBgmPortForMusicPlayer(void);
 
-int isFG = SCE_TRUE;
-extern SceBool isSceShellUsed;
+extern SceUID main_thread_uid;
+extern SceUID event_flag_uid;
 
 static SceCtrlData pad, old_pad;
-static int lock_power = 0;
-static int finish_flag = SCE_FALSE;
+static SceBool ime_module_loaded = SCE_FALSE;
+static SceUInt32 libime_work[SCE_IME_WORK_BUFFER_SIZE / sizeof(SceUInt32)];
+
+static SceNotificationUtilProgressInitParam notify_init_param;
+static SceNotificationUtilProgressUpdateParam notify_update_param;
 
 void Utils_SetMax(int *set, int value, int max) {
 	if (*set > max)
@@ -46,42 +61,102 @@ int Utils_ReadControls(void) {
 	return 0;
 }
 
-int Utils_AppStatusIsRunning(void)
+void Utils_Exit(void)
 {
-	return finish_flag;
+	sceNotificationUtilCleanHistory();
+	SceUID	modid = taiLoadStartKernelModule("ux0:app/ELEVENMPV/module/exit_module.skprx", 0, NULL, 0);
+	sceAppMgrQuitForNonSuspendableApp();
+	taiStopUnloadKernelModule(modid, 0, NULL, 0, NULL, NULL);
+}
+
+void Utils_NotificationProgressBegin(SceNotificationUtilProgressInitParam* init_param) {
+	sceClibMemcpy(&notify_init_param, init_param, sizeof(SceNotificationUtilProgressInitParam));
+	sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_READY_NOTIFY);
+}
+
+void Utils_NotificationProgressUpdate(SceNotificationUtilProgressUpdateParam* update_param) {
+	sceClibMemcpy(&notify_update_param, update_param, sizeof(SceNotificationUtilProgressUpdateParam));
+	sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_UPDATE_NOTIFY);
+}
+
+void Utils_NotificationEnd(void) {
+	sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_END_NOTIFY);
+}
+
+void Utils_NotificationEventHandler(int a1) {
+	switch (config.notify_mode) {
+	case 1:
+		sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_FINISHED_PLAYLIST);
+		break;
+	case 2:
+		Config_Save(config);
+		if (!Utils_IsDecoderUsed()) {
+			shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);
+			shellAudioFinishForMusicPlayer();
+		}
+		Utils_Exit();
+		break;
+	}
 }
 
 int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 {
+	int vol;
 	SceAppMgrEvent appEvent;
 	while (SCE_TRUE) {
+
+		//check app status
+
 		_sceAppMgrReceiveEvent(&appEvent);
 		switch (appEvent.event) {
-		case 268435457: // resume
-			isFG = SCE_TRUE;
+		case SCE_APP_EVENT_ON_ACTIVATE:
+			if (paused && Utils_IsDecoderUsed())
+				sceAppMgrAcquireBgmPortForMusicPlayer();
+			sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_FG);
+			sceKernelChangeThreadPriority(main_thread_uid, 160);
 			break;
-		case 268435458: // exit
-			isFG = SCE_FALSE;
+		case SCE_APP_EVENT_ON_DEACTIVATE:
+			if (paused)
+				sceAppMgrReleaseBgmPort();
+			sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_FG);
+			sceKernelChangeThreadPriority(main_thread_uid, 191);
 			break;
-		case 536870913: // destroy
-			/* sceAppMgrQuitForNonSuspendableApp(); */ //Doesn't work due to """"ksceSblACMgrIsNonGameProgram()""""
-			finish_flag = SCE_TRUE;
+		case SCE_APP_EVENT_REQUEST_QUIT:
+			Config_Save(config);
+			if (!Utils_IsDecoderUsed()) {
+				shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);
+				shellAudioFinishForMusicPlayer();
+			}
+			Utils_Exit();
 			break;
 		}
-		sceKernelDelayThread(10 * 1000);
-	}
 
-	return 0;
-}
+		//check volume
 
-int Utils_VolumeWatchdog(SceSize argc, void* argv)
-{
-	int vol = 0;
-
-	while (SCE_TRUE) {
 		sceAppUtilSystemParamGetInt(9, &vol);
 		vitaAudioSetVolume(vol, vol);
-		sceKernelDelayThread(1000);
+
+		//check notifications
+
+		if (config.notify_mode > 0) {
+			if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_READY_NOTIFY, SCE_KERNEL_EVF_WAITMODE_AND, NULL)) {
+				sceNotificationUtilProgressBegin(&notify_init_param);
+				sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_READY_NOTIFY);
+			}
+			else if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_END_NOTIFY, SCE_KERNEL_EVF_WAITMODE_AND, NULL)) {
+				SceNotificationUtilProgressFinishParam finish_param;
+				sceClibMemset(&finish_param, 0, sizeof(SceNotificationUtilProgressFinishParam));
+				Utils_Utf8ToUtf16((char *)finish_param.notificationText, "Playback has been stopped.");
+				sceNotificationUtilProgressFinish(&finish_param);
+				sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_END_NOTIFY);
+			}
+			else if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_UPDATE_NOTIFY, SCE_KERNEL_EVF_WAITMODE_AND, NULL)) {
+				sceNotificationUtilProgressUpdate(&notify_update_param);
+				sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_UPDATE_NOTIFY);
+			}
+		}
+
+		sceKernelDelayThread(10 * 1000);
 	}
 
 	return 0;
@@ -89,11 +164,13 @@ int Utils_VolumeWatchdog(SceSize argc, void* argv)
 
 int Utils_InitAppUtil(void) {
 
+	sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL);
+
+	sceClibMemset(&notify_init_param, 0, sizeof(SceNotificationUtilProgressInitParam));
+	sceClibMemset(&notify_update_param, 0, sizeof(SceNotificationUtilProgressUpdateParam));
+
 	SceUID status_watchdog = sceKernelCreateThread("app_status_watchdog", Utils_AppStatusWatchdog, 191, 0x1000, 0, 0, NULL);
 	sceKernelStartThread(status_watchdog, 0, NULL);
-
-	SceUID volume_watchdog = sceKernelCreateThread("volume_watchdog", Utils_VolumeWatchdog, 191, 0x1000, 0, 0, NULL);
-	sceKernelStartThread(volume_watchdog, 0, NULL);
 
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;
@@ -103,20 +180,6 @@ int Utils_InitAppUtil(void) {
 	int ret = 0;
 	
 	if (R_FAILED(ret = sceAppUtilInit(&init, &boot)))
-		return ret;
-
-	if (R_FAILED(ret = sceAppUtilMusicMount()))
-		return ret;
-	
-	return 0;
-}
-
-int Utils_TermAppUtil(void) {
-	int ret = 0;
-
-	if (R_FAILED(ret = sceAppUtilMusicUmount()))
-	
-	if (R_FAILED(ret = sceAppUtilShutdown()))
 		return ret;
 	
 	return 0;
@@ -155,7 +218,7 @@ int Utils_Alphasort(const void *p1, const void *p2) {
 	else if (!(SCE_S_ISDIR(entryA->d_stat.st_mode)) && (SCE_S_ISDIR(entryB->d_stat.st_mode)))
 		return 1;
 		
-	return strcasecmp(entryA->d_name, entryB->d_name);
+	return sceLibcStrcasecmp(entryA->d_name, entryB->d_name);
 }
 
 char *Utils_Basename(const char *filename) {
@@ -163,10 +226,10 @@ char *Utils_Basename(const char *filename) {
 	return p ? p + 1 : (char *) filename;
 }
 
-static int power_tick_thread(SceSize args, void *argp) {
-	while (1) {
-		if (lock_power > 0)
-			sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DISABLE_AUTO_SUSPEND);
+int power_tick_thread(SceSize args, void *argp) {
+	while (SCE_TRUE) {
+		sceKernelWaitEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_POWER_LOCKED, SCE_KERNEL_EVF_WAITMODE_AND, NULL, NULL);
+		sceKernelPowerTick(SCE_KERNEL_POWER_TICK_DISABLE_AUTO_SUSPEND);
 
 		sceKernelDelayThread(10 * 1000 * 1000);
 	}
@@ -179,14 +242,49 @@ void Utils_InitPowerTick(void) {
 		sceKernelStartThread(thid, 0, NULL);
 }
 
-void Utils_LockPower(void) {
-
-	lock_power++;
+SceBool Utils_IsDecoderUsed(void) {
+	if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED, SCE_KERNEL_EVF_WAITMODE_AND, NULL))
+		return SCE_TRUE;
+	else
+		return SCE_FALSE;
 }
 
-void Utils_UnlockPower(void) {
+SceBool Utils_IsFinishedPlaylist(void) {
+	if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_FINISHED_PLAYLIST, SCE_KERNEL_EVF_WAITMODE_AND, NULL))
+		return SCE_TRUE;
+	else
+		return SCE_FALSE;
+}
 
-	lock_power--;
-	if (lock_power < 0)
-		lock_power = 0;
+void Utils_LoadIme(SceImeParam* param) {
+
+	if (!ime_module_loaded) {
+		sceSysmoduleLoadModule(SCE_SYSMODULE_IME);
+		ime_module_loaded = SCE_TRUE;
+	}
+
+	sceImeParamInit(param);
+	param->supportedLanguages = 0;
+	param->languagesForced = SCE_FALSE;
+	param->option = 0;
+	param->filter = NULL;
+	param->arg = NULL;
+	param->work = libime_work;
+}
+
+void Utils_UnloadIme(void) {
+	sceSysmoduleUnloadModule(SCE_SYSMODULE_IME);
+	ime_module_loaded = SCE_FALSE;
+}
+
+void Utils_Utf8ToUtf16(char* str1, const char* str2)
+{
+	while (*str2)
+	{
+		*str1 = *str2;
+		str1++;
+		*str1 = '\0';
+		str1++;
+		str2++;
+	}
 }

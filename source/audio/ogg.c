@@ -50,6 +50,7 @@ int OGG_Init(const char *path) {
 
 	vorbis_comment *comment = ov_comment(&ogg, -1);
 	if (comment != NULL) {
+
 		metadata.has_meta = SCE_TRUE;
 
 		char *value = NULL;
@@ -88,9 +89,10 @@ static SceUInt64 OGG_FillBuffer(char *out) {
 	SceUInt64 samples_read = 0;
 	int samples_to_read = (sizeof(SceInt16) * ogg_info->channels) * 960;
 
+	int current_section, samples_just_read;
+
 	while(samples_to_read > 0) {
-		static int current_section;
-		int samples_just_read = ov_read(&ogg, out, samples_to_read > 960 ? 960 : samples_to_read, 0, 2, 1, &current_section);
+		samples_just_read = ov_read(&ogg, out, samples_to_read > 960 ? 960 : samples_to_read, 0, 2, 1, &current_section);
 
 		if (samples_just_read < 0)
 			return samples_just_read;

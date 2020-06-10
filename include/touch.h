@@ -1,11 +1,3 @@
-/*
-		
-		Taken from VitaComix by Arkanite.
-		A manga/comic book reader for the Playstation Vita
-		
-		File: touch.c
-		
-*/
 #ifndef _ELEVENMPV_TOUCH_H_
 #define _ELEVENMPV_TOUCH_H_
 

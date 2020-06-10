@@ -9,3 +9,6 @@ modules:
         nid: 0x773242C7
         functions:
           SceShellSvc_B31E7F1C: 0xB31E7F1C
+          SceShellSvc_A0B067AC: 0xA0B067AC
+          SceShellSvc_8D4F9F2E: 0x8D4F9F2E
+          SceShellSvc_D943CE15: 0xD943CE15

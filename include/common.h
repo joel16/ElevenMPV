@@ -15,7 +15,7 @@
 
 #define FILES_PER_PAGE 6
 
-extern vita2d_font *font;
+extern vita2d_pvf *font;
 extern enum SceCtrlButtons SCE_CTRL_ENTER, SCE_CTRL_CANCEL;
 extern SceUInt32 pressed;
 extern int position;

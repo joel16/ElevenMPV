@@ -1,4 +1,5 @@
-#include <string.h>
+#include <psp2/kernel/clib.h>
+#include <psp2/libc.h>
 
 #include "audio.h"
 #include "xmp.h"
@@ -8,12 +9,19 @@ static struct xmp_frame_info frame_info;
 static struct xmp_module_info module_info;
 static SceUInt64 samples_read = 0, total_samples = 0;
 
+extern void* mspace;
+
 int XM_Init(const char *path) {
 	xmp = xmp_create_context();
-	char *xmp_path = strdup(path);
 
-	if (xmp_load_module(xmp, xmp_path) < 0)
+	size_t pathlen = sceLibcStrlen(path);
+	char *xmp_path = sceClibMspaceMalloc(mspace, pathlen);
+	sceClibMemcpy(xmp_path, path, pathlen);
+
+	if (xmp_load_module(xmp, xmp_path) < 0) {
+		sceClibMspaceFree(mspace, xmp_path);
 		return -1;
+	}
 
 	xmp_start_player(xmp, 44100, 0);
 	xmp_get_frame_info(xmp, &frame_info);
@@ -22,8 +30,10 @@ int XM_Init(const char *path) {
 	xmp_get_module_info(xmp, &module_info);
 	if (module_info.mod->name[0] != '\0') {
         metadata.has_meta = SCE_TRUE;
-        strcpy(metadata.title, module_info.mod->name);
+		sceLibcStrcpy(metadata.title, module_info.mod->name);
     }
+
+	sceClibMspaceFree(mspace, xmp_path);
 
 	return 0;
 }

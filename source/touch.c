@@ -99,11 +99,6 @@ int Touch_GetDragRecStateXPos(int rec_type) {
 		return -1;
 }
 
-void Touch_Shutdown(void) {
-	sceClibMspaceFree(mspace, touch_recognizers);
-	sceSysmoduleUnloadModule(SCE_SYSMODULE_SYSTEM_GESTURE);
-}
-
 int Touch_GetTapRecState(int rec_type) {
 	SceSystemGestureTouchEvent tap_event;
 	SceUInt32 event_num_buffer = 0;

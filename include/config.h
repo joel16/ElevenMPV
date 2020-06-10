@@ -8,8 +8,14 @@ typedef struct {
 	SceBool meta_mp3;
 	SceBool meta_opus;
 	int sort;
-	int alc_mode;
+	SceBool alc_mode;
 	int eq_mode;
+	SceBool motion_mode;
+	int motion_timer;
+	int motion_degree;
+	SceBool power_saving;
+	int power_timer;
+	int notify_mode;
 	int device;
 } config_t;
 

@@ -6,6 +6,7 @@
 #include "vitaaudiolib.h"
 #include "fs.h"
 #include "touch.h"
+#include "utils.h"
 
 #include "flac.h"
 #include "mp3.h"
@@ -39,16 +40,17 @@ typedef struct {
 	void (* term)(void);
 } Audio_Decoder;
 
-SceBool isSceShellUsed = SCE_FALSE;
 static enum Audio_FileType file_type = FILE_TYPE_NONE;
 Audio_Metadata metadata = {0};
 static Audio_Metadata empty_metadata = {0};
 static Audio_Decoder decoder = {0}, empty_decoder = {0};
 static SceUInt64 seek_position = 0;
 static SceBool seek_mode = SCE_FALSE;
-SceBool playing = SCE_TRUE, paused = SCE_FALSE;
+SceBool playing = SCE_FALSE, paused = SCE_FALSE;
 
 SceShellSvcAudioPlaybackStatus pb_stats;
+
+extern SceUID event_flag_uid;
 
 static void Audio_Decode(void *buf, unsigned int length, void *userdata) {
 	if (playing == SCE_FALSE || paused == SCE_TRUE) {
@@ -93,7 +95,7 @@ int Audio_Init(const char *path) {
 			decoder.length = FLAC_GetLength;
 			decoder.seek = FLAC_Seek;
 			decoder.term = FLAC_Term;
-			isSceShellUsed = SCE_FALSE;
+			sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_MP3:
@@ -105,7 +107,7 @@ int Audio_Init(const char *path) {
 			decoder.length = MP3_GetLength;
 			decoder.seek = MP3_Seek;
 			decoder.term = MP3_Term;
-			isSceShellUsed = SCE_TRUE;
+			sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_OGG:
@@ -117,7 +119,7 @@ int Audio_Init(const char *path) {
 			decoder.length = OGG_GetLength;
 			decoder.seek = OGG_Seek;
 			decoder.term = OGG_Term;
-			isSceShellUsed = SCE_FALSE;
+			sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_OPUS:
@@ -129,7 +131,7 @@ int Audio_Init(const char *path) {
 			decoder.length = OPUS_GetLength;
 			decoder.seek = OPUS_Seek;
 			decoder.term = OPUS_Term;
-			isSceShellUsed = SCE_FALSE;
+			sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_WAV:
@@ -141,7 +143,7 @@ int Audio_Init(const char *path) {
 			decoder.length = WAV_GetLength;
 			decoder.seek = WAV_Seek;
 			decoder.term = WAV_Term;
-			isSceShellUsed = SCE_TRUE;
+			sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_XM:
@@ -153,7 +155,7 @@ int Audio_Init(const char *path) {
 			decoder.length = XM_GetLength;
 			decoder.seek = XM_Seek;
 			decoder.term = XM_Term;
-			isSceShellUsed = SCE_FALSE;
+			sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_ATRAC9:
@@ -165,7 +167,7 @@ int Audio_Init(const char *path) {
 			decoder.length = AT9_GetLength;
 			decoder.seek = AT9_Seek;
 			decoder.term = AT9_Term;
-			isSceShellUsed = SCE_TRUE;
+			sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		case FILE_TYPE_AAC:
@@ -177,7 +179,7 @@ int Audio_Init(const char *path) {
 			decoder.length = AAC_GetLength;
 			decoder.seek = AAC_Seek;
 			decoder.term = AAC_Term;
-			isSceShellUsed = SCE_TRUE;
+			sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		default:
@@ -185,7 +187,7 @@ int Audio_Init(const char *path) {
 	}
 
 	(* decoder.init)(path);
-	if (!isSceShellUsed)
+	if (Utils_IsDecoderUsed())
 		vitaAudioInit((* decoder.rate)(), (* decoder.channels)() == 2? SCE_AUDIO_OUT_MODE_STEREO : SCE_AUDIO_OUT_MODE_MONO);
 	vitaAudioSetChannelCallback(Audio_Decode, NULL);
 	return 0;
@@ -196,15 +198,15 @@ SceBool Audio_IsPaused(void) {
 }
 
 void Audio_Pause(void) {
-	if (isSceShellUsed && paused)
+	if (!Utils_IsDecoderUsed() && paused)
 		shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_PLAY, 0);
-	else if (isSceShellUsed)
+	else if (!Utils_IsDecoderUsed())
 		shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);
 	paused = !paused;
 }
 
 void Audio_Stop(void) {
-	if (isSceShellUsed)
+	if (!Utils_IsDecoderUsed())
 		shellAudioSendCommandForMusicPlayer(SCE_SHELLAUDIO_STOP, 0);
 	playing = !playing;
 }
@@ -221,14 +223,14 @@ SceUInt64 Audio_GetLength(void) {
 }
 
 SceUInt64 Audio_GetPositionSeconds(void) {
-	if (isSceShellUsed)
+	if (!Utils_IsDecoderUsed())
 		return (Audio_GetPosition() / 1000);
 	else
 		return (Audio_GetPosition() / (* decoder.rate)());
 }
 
 SceUInt64 Audio_GetLengthSeconds(void) {
-	if (isSceShellUsed)
+	if (!Utils_IsDecoderUsed())
 		return (Audio_GetLength() / 1000);
 	else
 		return (Audio_GetLength() / (*decoder.rate)());

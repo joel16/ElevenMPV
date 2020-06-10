@@ -2,8 +2,7 @@
 #include <psp2/io/dirent.h>
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
-#include <stdlib.h>
-#include <string.h>
+#include <psp2/libc.h>
 
 #include "common.h"
 #include "config.h"
@@ -43,9 +42,9 @@ static int cmpstringp(const void *p1, const void *p2) {
 		return 1;
 	else {
 		if (config.sort == 0) // Sort alphabetically (ascending - A to Z)
-			return strcasecmp(entryA->d_name, entryB->d_name);
+			return sceLibcStrcasecmp(entryA->d_name, entryB->d_name);
 		else if (config.sort == 1) // Sort alphabetically (descending - Z to A)
-			return strcasecmp(entryB->d_name, entryA->d_name);
+			return sceLibcStrcasecmp(entryB->d_name, entryA->d_name);
 		else if (config.sort == 2) // Sort by file size (largest first)
 			return entryA->d_stat.st_size > entryB->d_stat.st_size ? -1 : entryA->d_stat.st_size < entryB->d_stat.st_size ? 1 : 0;
 		else if (config.sort == 3) // Sort by file size (smallest first)
@@ -71,7 +70,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 			entryCount++;
 
 		sceIoDclose(dir);
-		qsort(entries, entryCount, sizeof(SceIoDirent), cmpstringp);
+		sceLibcQsort(entries, entryCount, sizeof(SceIoDirent), cmpstringp);
 
 		for (int i = -1; i < entryCount; i++) {
 			// Allocate Memory
@@ -79,7 +78,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 			sceClibMemset(item, 0, sizeof(File));
 
 			if ((sceClibStrcmp(cwd, root_path)) && (i == -1) && (!parent_dir_set)) {
-				strcpy(item->name, "..");
+				sceLibcStrcpy(item->name, "..");
 				item->is_dir = SCE_TRUE;
 				parent_dir_set = SCE_TRUE;
 				file_count++;
@@ -91,8 +90,8 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 				item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
 
 				// Copy File Name
-				strcpy(item->name, entries[i].d_name);
-				strcpy(item->ext, FS_GetFileExt(item->name));
+				sceLibcStrcpy(item->name, entries[i].d_name);
+				sceLibcStrcpy(item->ext, FS_GetFileExt(item->name));
 				file_count++;
 			}
 
@@ -127,7 +126,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 }
 
 void Dirbrowse_DisplayFiles(void) {
-	vita2d_font_draw_text(font, 102, 40 + ((72 - vita2d_font_text_height(font, 25, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 25, cwd);
+	vita2d_pvf_draw_text(font, 102, 40 + ((72 - vita2d_pvf_text_height(font, 1, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 1, cwd);
 
 	if (!(!sceClibStrcmp(cwd, root_path)))
 		vita2d_draw_texture(icon_back, BTN_BACK_X, BTN_TOPBAR_Y);
@@ -154,9 +153,9 @@ void Dirbrowse_DisplayFiles(void) {
 				vita2d_draw_texture(icon_file, 15, 117 + (72 * printed));
 
 			if (sceClibStrncmp(file->name, "..", 2) == 0)
-				vita2d_font_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 25, "Parent folder");
+				vita2d_pvf_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 1, "Parent folder");
 			else 
-				vita2d_font_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 25, file->name);
+				vita2d_pvf_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 1, file->name);
 
 			printed++; // Increase printed counter
 		}
@@ -182,8 +181,8 @@ void Dirbrowse_OpenFile(void) {
 	if (file == NULL)
 		return;
 
-	strcpy(path, cwd);
-	strcpy(path + strlen(path), file->name);
+	sceLibcStrcpy(path, cwd);
+	sceLibcStrcpy(path + sceLibcStrlen(path), file->name);
 
 	if (file->is_dir) {
 		// Attempt to navigate to target
@@ -211,7 +210,7 @@ int Dirbrowse_Navigate(SceBool parent) {
 		char *slash = NULL;
 
 		// Find last '/' in working directory
-		int i = strlen(cwd) - 2; for(; i >= 0; i--) {
+		int i = sceLibcStrlen(cwd) - 2; for(; i >= 0; i--) {
 			// Slash discovered
 			if (cwd[i] == '/') {
 				slash = cwd + i + 1; // Save pointer
@@ -226,9 +225,9 @@ int Dirbrowse_Navigate(SceBool parent) {
 	else {
 		if (file->is_dir) {
 			// Append folder to working directory
-			strcpy(cwd + strlen(cwd), file->name);
-			cwd[strlen(cwd) + 1] = 0;
-			cwd[strlen(cwd)] = '/';
+			sceLibcStrcpy(cwd + sceLibcStrlen(cwd), file->name);
+			cwd[sceLibcStrlen(cwd) + 1] = 0;
+			cwd[sceLibcStrlen(cwd)] = '/';
 		}
 	}
 
