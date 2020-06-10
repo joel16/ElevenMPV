@@ -182,6 +182,9 @@ int Utils_InitAppUtil(void) {
 	if (R_FAILED(ret = sceAppUtilInit(&init, &boot)))
 		return ret;
 	
+	if (R_FAILED(ret = sceAppUtilMusicMount()))
+		return ret;
+	
 	return 0;
 }
 
