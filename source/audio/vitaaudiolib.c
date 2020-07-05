@@ -1,8 +1,10 @@
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/apputil.h>
 
 #include "vitaaudiolib.h"
 #include "utils.h"
+#include "config.h"
 
 static int audio_ready = 0;
 static short vitaAudioSoundBuffer[2][VITA_NUM_AUDIO_SAMPLES][2];
@@ -10,19 +12,6 @@ static VITA_audio_channelinfo vitaAudioStatus;
 static volatile int audio_terminate = 0;
 
 extern SceUID event_flag_uid;
-
-void vitaAudioSetVolume(int left, int right) {
-
-	int vol[2] = { left, right };
-
-	if (vol[0] > SCE_AUDIO_OUT_MAX_VOL)
-		vol[0] = SCE_AUDIO_OUT_MAX_VOL;
-
-	if (vol[1] > SCE_AUDIO_OUT_MAX_VOL)
-		vol[1] = SCE_AUDIO_OUT_MAX_VOL;
-
-	sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
-}
 
 void vitaAudioSetChannelCallback(vitaAudioCallback_t callback, void *userdata) {
 	volatile VITA_audio_channelinfo *pci = &vitaAudioStatus;
@@ -36,6 +25,7 @@ void vitaAudioSetChannelCallback(vitaAudioCallback_t callback, void *userdata) {
 static int vitaAudioChannelThread(unsigned int args, void *argp) {
 	volatile int bufidx = 0;
 	void *bufptr;
+	int vol[2];
 
 	while (audio_terminate == 0) {
 		sceKernelWaitEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED, SCE_KERNEL_EVF_WAITMODE_AND, NULL, NULL);
@@ -51,8 +41,28 @@ static int vitaAudioChannelThread(unsigned int args, void *argp) {
 				*(ptr++) = 0;
 		}
 
-		if (audio_ready)
+		if (audio_ready) {
+			sceAppUtilSystemParamGetInt(9, &vol[0]);
+
+			if (config.eq_volume) {
+				if (config.eq_mode == 0) {
+					vol[1] = vol[0];
+					sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
+				}
+				else {
+					vol[0] = vol[0] / 2;
+					vol[1] = vol[0];
+					sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
+				}
+			}
+			else {
+				vol[1] = vol[0];
+				sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
+			}
+
+			sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
 			sceAudioOutOutput(vitaAudioStatus.handle, bufptr);
+		}
 		bufidx = (bufidx ? 0 : 1);
 	}
 

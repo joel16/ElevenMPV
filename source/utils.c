@@ -145,17 +145,6 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv) {
 			break;
 		}
 
-		//check volume
-
-		sceAppUtilSystemParamGetInt(9, &vol);
-
-		if (config.eq_volume) {
-			if (config.eq_mode == 0)
-				vitaAudioSetVolume(vol, vol);
-			else
-				vitaAudioSetVolume(vol / 2, vol / 2);
-		}
-
 		//check notifications
 
 		if (config.notify_mode > 0) {
@@ -183,7 +172,7 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv) {
 		sceClibPrintf("LPDDR2: %f MB\n", budget_info.freeLPDDR2 / 1024.0 / 1024.0);*/
 #endif
 
-		sceKernelDelayThread(100 * 1000);
+		sceKernelDelayThread(10 * 1000);
 	}
 
 	return 0;
