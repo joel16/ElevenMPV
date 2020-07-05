@@ -9,19 +9,11 @@ static struct xmp_frame_info frame_info;
 static struct xmp_module_info module_info;
 static SceUInt64 samples_read = 0, total_samples = 0;
 
-extern void* mspace;
-
 int XM_Init(const char *path) {
 	xmp = xmp_create_context();
 
-	size_t pathlen = sceLibcStrlen(path);
-	char *xmp_path = sceClibMspaceMalloc(mspace, pathlen);
-	sceClibMemcpy(xmp_path, path, pathlen);
-
-	if (xmp_load_module(xmp, xmp_path) < 0) {
-		sceClibMspaceFree(mspace, xmp_path);
+	if (xmp_load_module(xmp, path) < 0)
 		return -1;
-	}
 
 	xmp_start_player(xmp, 44100, 0);
 	xmp_get_frame_info(xmp, &frame_info);
@@ -32,8 +24,6 @@ int XM_Init(const char *path) {
         metadata.has_meta = SCE_TRUE;
 		sceLibcStrcpy(metadata.title, module_info.mod->name);
     }
-
-	sceClibMspaceFree(mspace, xmp_path);
 
 	return 0;
 }

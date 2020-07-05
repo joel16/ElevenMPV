@@ -4,6 +4,8 @@
 #include <psp2/ime.h>
 #include <psp2/notificationutil.h>
 
+#define JPEGDEC_SIZE_LIMIT 262144 //500x500
+
 #define SCE_KERNEL_ATTR_MULTI (0x00001000U)
 
 #define SCE_KERNEL_EVF_WAITMODE_AND			(0x00000000U)
@@ -28,7 +30,6 @@
 
 void Utils_SetMax(int *set, int value, int max);
 void Utils_SetMin(int *set, int value, int min);
-int Utils_ReadControls(void);
 int Utils_InitAppUtil(void);
 int Utils_TermAppUtil(void);
 int Utils_GetEnterButton(void);
@@ -40,10 +41,12 @@ SceBool Utils_IsDecoderUsed(void);
 SceBool Utils_IsFinishedPlaylist(void);
 void Utils_LoadIme(SceImeParam* param);
 void Utils_UnloadIme(void);
-void Utils_Utf8ToUtf16(char* str1, const char* str2);
+void Utils_Utf8ToUtf16(SceWChar16* dst, char* src);
 void Utils_NotificationEventHandler(int a1);
 void Utils_NotificationEnd(void);
 void Utils_NotificationProgressBegin(SceNotificationUtilProgressInitParam* init_param);
 void Utils_NotificationProgressUpdate(SceNotificationUtilProgressUpdateParam* update_param);
+void Utils_WriteSafeMem(void* data, SceSize buf_size, SceOff offset);
+void Utils_ReadSafeMem(void* buf, SceSize buf_size, SceOff offset);
 
 #endif

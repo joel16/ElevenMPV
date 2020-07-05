@@ -26,9 +26,22 @@ void sceLibcSrand(unsigned int seed);
 int sceLibcRand(void);
 int sceLibcAtoi(const char* str);
 
+// malloc
+
+void* sceLibcMalloc(size_t size);
+void sceLibcFree(void* ptr);
+void* sceLibcCalloc(size_t num, size_t size);
+
 // stdio
 
 int sceLibcSscanf(const char* s, const char* format, ...);
+
+// libm
+
+double sceLibmRound(double x);
+double sceLibmExp(double x);
+double sceLibmPow(double x, double y);
+double sceLibmFabs(double x);
 
 #ifdef __cplusplus
 }

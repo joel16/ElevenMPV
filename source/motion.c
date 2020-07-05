@@ -10,10 +10,13 @@ static SceBool motion_busy = SCE_FALSE;
 static int motion_command_x = -1, motion_command_z = -1;
 
 void Motion_SetState(SceBool state) {
-	if (state)
+	if (state) {
 		sceMotionStartSampling();
-	else
+		sceMotionSetTiltCorrection(0);
+	}
+	else {
 		sceMotionStopSampling();
+	}
 }
 
 int Motion_GetCommand(void) {

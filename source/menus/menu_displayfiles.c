@@ -11,6 +11,10 @@
 
 extern SceUID event_flag_uid;
 
+#ifdef DEBUG
+extern SceAppMgrBudgetInfo budget_info;
+#endif // DEBUG
+
 static void Menu_HandleControls(void) {
 
 	Touch_Update();
@@ -55,13 +59,15 @@ void Menu_DisplayFiles(void) {
 		vita2d_draw_fill_circle(BTN_SETTINGS_X, BTN_TOPBAR_Y + 20, 3, RGBA8(255, 255, 255, 255));
 		vita2d_draw_fill_circle(BTN_SETTINGS_X, BTN_TOPBAR_Y + 35, 3, RGBA8(255, 255, 255, 255));
 
+#ifdef DEBUG
+		vita2d_pvf_draw_textf(font, 50, 100, RGBA8(255, 0, 0, 255), 1, "DEBUG BUILD, DO NOT REDISTRIBUTE. LPDDR2 BUDGET: %f MB", budget_info.freeLPDDR2 / 1024.0 / 1024.0);
+#endif
 		Dirbrowse_DisplayFiles();
 
 		vita2d_end_drawing();
 		vita2d_wait_rendering_done();
 		vita2d_end_shfb();
 
-		Utils_ReadControls();
 		Menu_HandleControls();
 
 		if ((pressed & SCE_CTRL_SELECT) || Touch_GetTapRecState(TOUCHREC_TAP_SETTINGS))

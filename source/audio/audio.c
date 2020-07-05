@@ -42,10 +42,10 @@ typedef struct {
 
 static enum Audio_FileType file_type = FILE_TYPE_NONE;
 Audio_Metadata metadata = {0};
-static Audio_Metadata empty_metadata = {0};
 static Audio_Decoder decoder = {0}, empty_decoder = {0};
 static SceUInt64 seek_position = 0;
 static SceBool seek_mode = SCE_FALSE;
+
 SceBool playing = SCE_FALSE, paused = SCE_FALSE;
 
 SceShellSvcAudioPlaybackStatus pb_stats;
@@ -82,7 +82,7 @@ int Audio_Init(const char *path) {
 		file_type = FILE_TYPE_XM;
 	else if (!sceClibStrncasecmp(FS_GetFileExt(path), "at9", 3))
 		file_type = FILE_TYPE_ATRAC9;
-	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "m4a", 2)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aac", 3)))
+	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "m4a", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aac", 3)))
 		file_type = FILE_TYPE_AAC;
 
 	switch(file_type) {
@@ -262,7 +262,5 @@ void Audio_Term(void) {
 	vitaAudioEnd();
 	(* decoder.term)();
 
-	// Clear metadata struct
-	metadata = empty_metadata;
 	decoder = empty_decoder;
 }

@@ -6,11 +6,16 @@
 
 extern SceBool playing, paused;
 
+#define MAX_IMAGE_WIDTH		512
+#define MAX_IMAGE_HEIGHT	512
+#define IMAGE_BUF_SIZE	(MAX_IMAGE_WIDTH * MAX_IMAGE_HEIGHT * 3)
+#define JPEG_BUF_SIZE	(MAX_IMAGE_WIDTH * MAX_IMAGE_HEIGHT)
+
 typedef struct {
 	SceBool has_meta;
-    char title[64];
+    char title[260];
     char album[64];
-    char artist[64];
+    char artist[260];
     char year[64];
     char comment[64];
     char genre[64];

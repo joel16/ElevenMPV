@@ -3,6 +3,7 @@
 
 #include <psp2/ctrl.h>
 #include <psp2/types.h>
+#include <psp2/appmgr.h>
 #include <vita2d_sys.h>
 
 /// Checks whether a result code indicates success.
@@ -14,6 +15,10 @@
 #define MAX_FILES 1024
 
 #define FILES_PER_PAGE 6
+
+#define FLIP_DELAY 100
+
+//#define DEBUG
 
 extern vita2d_pvf *font;
 extern enum SceCtrlButtons SCE_CTRL_ENTER, SCE_CTRL_CANCEL;

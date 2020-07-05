@@ -16,3 +16,27 @@ modules:
           sceLibcAtoi: 0x21493BE7
           sceLibcSscanf: 0xEC585241
           sceLibcStrcasecmp: 0x184C4B07
+          sceLibcMalloc: 0x775A0CB2
+          sceLibcCalloc: 0xE7EC3D0B
+          sceLibcFree: 0x5B9BB802
+      SceLibm:
+        kernel: false
+        nid: 0xCDAE3C7D
+        functions:
+          sceLibmRound: 0x64D37996
+          sceLibmExp: 0xEB027358
+          sceLibmPow: 0x640DB443
+          sceLibmFabs: 0x3E672BE3
+          floor: 0x22BB8237
+          pow: 0x640DB443
+          exp: 0xEB027358
+          acos: 0xD72B5ACB
+          cos: 0x061D0244
+          sqrt: 0xDA227FCC
+          atan: 0x516D9970
+          rint: 0x943F218F
+          log: 0x6037C48F
+          sin: 0xB5519FF0
+          ceil: 0x63F05BD6
+          powf: 0x6DEA815A
+          round: 0x64D37996

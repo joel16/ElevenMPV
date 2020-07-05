@@ -10,6 +10,7 @@ typedef struct {
 	int sort;
 	SceBool alc_mode;
 	int eq_mode;
+	SceBool eq_volume;
 	SceBool motion_mode;
 	int motion_timer;
 	int motion_degree;

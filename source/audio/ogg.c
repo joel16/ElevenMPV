@@ -56,22 +56,22 @@ int OGG_Init(const char *path) {
 		char *value = NULL;
 
 		if ((value = vorbis_comment_query(comment, "title", 0)) != NULL)
-			sceClibSnprintf(metadata.title, 31, "%s\n", value);
+			sceClibSnprintf(metadata.title, 260, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "album", 0)) != NULL)
-			sceClibSnprintf(metadata.album, 31, "%s\n", value);
+			sceClibSnprintf(metadata.album, 64, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "artist", 0)) != NULL)
-			sceClibSnprintf(metadata.artist, 31, "%s\n", value);
+			sceClibSnprintf(metadata.artist, 260, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "year", 0)) != NULL)
 			sceClibSnprintf(metadata.year, 5, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "comment", 0)) != NULL)
-			sceClibSnprintf(metadata.comment, 31, "%s\n", value);
+			sceClibSnprintf(metadata.comment, 64, "%s\n", value);
 
 		if ((value = vorbis_comment_query(comment, "genre", 0)) != NULL)
-			sceClibSnprintf(metadata.genre, 31, "%s\n", value);
+			sceClibSnprintf(metadata.genre, 64, "%s\n", value);
 	}
 
 	return 0;

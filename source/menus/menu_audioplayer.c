@@ -23,9 +23,13 @@
 #include "utils.h"
 #include "dirbrowse.h"
 
-#define METADATA1_X 15
-#define METADATA2_X 495
-#define METADATA_Y 155
+#define METADATA1_X 80
+#define METADATA2_X 425
+#define METADATA1_Y BTN_SETTINGS_Y + 15
+#define METADATA2_Y 155
+
+#define NOCOVER_X 200
+#define NOCOVER_Y 324
 
 typedef enum {
 	MUSIC_STATE_NONE,   // 0
@@ -34,26 +38,35 @@ typedef enum {
 	MUSIC_STATE_SHUFFLE // 3
 } Music_State;
 
+static Audio_Metadata empty_metadata = { 0 };
 static char playlist[1024][512];
+static char order[10];
+static char external_cover[512];
 static int count = 0, selection = 0, initial_selection = 0, state = 0;
 static int length_time_width = 0;
 char *position_time = NULL, *length_time = NULL, *filename = NULL;
-static SceBool isFirstTimeInit = SCE_TRUE;
+static SceBool isFirstTimeInit = SCE_TRUE, ext_cover_is_jpeg = SCE_FALSE, ext_cover_loaded = SCE_FALSE, tex_filter_on = SCE_FALSE;
 static SceUInt64 length;
+static vita2d_texture* external_cover_tmp;
 
-extern void* mspace;
 extern SceUID event_flag_uid;
 
-void* sceClibMspaceCalloc(void* space, size_t num, size_t size);
+#ifdef DEBUG
+extern SceAppMgrBudgetInfo budget_info;
+#endif
+
 int sceAudioOutSetEffectType(int type);
 int sceAppMgrAcquireBgmPortForMusicPlayer(void);
 
 static int Menu_GetMusicList(void) {
 	SceUID dir = 0;
 
+	sceClibMemset(&external_cover, 0, 512);
+
 	if (R_SUCCEEDED(dir = sceIoDopen(cwd))) {
+
 		int entryCount = 0, i = 0;
-		SceIoDirent *entries = (SceIoDirent *)sceClibMspaceCalloc(mspace, MAX_FILES, sizeof(SceIoDirent));
+		SceIoDirent *entries = (SceIoDirent *)sceLibcCalloc(MAX_FILES, sizeof(SceIoDirent));
 
 		while (sceIoDread(dir, &entries[entryCount]) > 0)
 			entryCount++;
@@ -63,18 +76,29 @@ static int Menu_GetMusicList(void) {
 
 		for (i = 0; i < entryCount; i++) {
 			if ((!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "flac", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "it", 4)) ||
-				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "mod", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "mp3", 4)) || 
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "mod", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "mp3", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "ogg", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "opus", 4)) ||
-				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 4)) || 
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "at9", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "m4a", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "aac", 4))) {
 				sceLibcStrcpy(playlist[count], cwd);
 				sceLibcStrcpy(playlist[count] + sceLibcStrlen(playlist[count]), entries[i].d_name);
 				count++;
 			}
+
+			if (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "jpg", 4) || !sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "jpeg", 4)) {
+				if (!sceClibStrncasecmp(entries[i].d_name, "cover", 5) || !sceClibStrncasecmp(entries[i].d_name, "folder", 6)) {
+					sceClibSnprintf(external_cover, 512, "%s%s", cwd, entries[i].d_name);
+					ext_cover_is_jpeg = SCE_TRUE;
+				}
+			}
+			else if (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "png", 4)) {
+				if (!sceClibStrncasecmp(entries[i].d_name, "cover", 5) || !sceClibStrncasecmp(entries[i].d_name, "folder", 6))
+					sceClibSnprintf(external_cover, 512, "%s%s", cwd, entries[i].d_name);
+			}
 		}
 
-		sceClibMspaceFree(mspace, entries);
+		sceLibcFree(entries);
 	}
 	else {
 		sceIoDclose(dir);
@@ -105,6 +129,42 @@ static void Menu_ConvertSecondsToString(char *string, SceUInt64 seconds) {
 		sceClibSnprintf(string, 35, "%02d:%02d", m, s);
 }
 
+void Menu_LoadExternalCover(void) {
+	if (external_cover[0] != '\0' && metadata.cover_image == NULL && !ext_cover_loaded) {
+		if (ext_cover_is_jpeg) {
+			vita2d_JPEG_ARM_decoder_initialize();
+			metadata.cover_image = vita2d_load_JPEG_ARM_file(external_cover, 0, 0, 0, 0);
+			vita2d_JPEG_ARM_decoder_finish();
+			external_cover_tmp = metadata.cover_image;
+			ext_cover_loaded = SCE_TRUE;
+			metadata.has_meta = SCE_TRUE;
+		}
+		else {
+			metadata.cover_image = vita2d_load_PNG_file(external_cover, 0);
+			external_cover_tmp = metadata.cover_image;
+			ext_cover_loaded = SCE_TRUE;
+			metadata.has_meta = SCE_TRUE;
+		}
+	}
+
+	if (ext_cover_loaded && !metadata.has_meta) {
+		metadata.cover_image = external_cover_tmp;
+		metadata.has_meta = SCE_TRUE;
+	}
+	else if (ext_cover_loaded && metadata.has_meta && metadata.cover_image == NULL)
+		metadata.cover_image = external_cover_tmp;
+}
+
+void Menu_UnloadExternalCover(void) {
+	if (ext_cover_loaded) {
+		vita2d_wait_rendering_done();
+		metadata.cover_image = external_cover_tmp;
+		vita2d_free_texture(metadata.cover_image);
+		metadata.cover_image = NULL;
+		ext_cover_loaded = SCE_FALSE;
+	}
+}
+
 void Menu_NotificationBegin(void) {
 	SceNotificationUtilProgressInitParam init_param;
 	sceClibMemset(&init_param, 0, sizeof(SceNotificationUtilProgressInitParam));
@@ -112,19 +172,20 @@ void Menu_NotificationBegin(void) {
 	sceClibStrncpy((char *)init_param.notificationText, "\xB9\xF8", 2);
 	if (metadata.has_meta) {
 		if (metadata.title[0] != '\0')
-			Utils_Utf8ToUtf16((char *)&init_param.notificationText[1], metadata.title);
+			Utils_Utf8ToUtf16(&init_param.notificationText[1], metadata.title);
 		else
-			Utils_Utf8ToUtf16((char *)&init_param.notificationText[1], filename);
-		if (metadata.artist[0] != '\0')
-			Utils_Utf8ToUtf16((char *)init_param.notificationSubText, metadata.artist);
+			Utils_Utf8ToUtf16(&init_param.notificationText[1], filename);
+		if (metadata.artist[0] != '\0') {
+			Utils_Utf8ToUtf16(init_param.notificationSubText, metadata.artist);
+		}
 	}
 	else
-		Utils_Utf8ToUtf16((char *)&init_param.notificationText[1], filename);
+		Utils_Utf8ToUtf16(&init_param.notificationText[1], filename);
 
 	if (config.notify_mode == 1)
-		Utils_Utf8ToUtf16((char *)init_param.cancelDialogText, "Stop playback?");
+		Utils_Utf8ToUtf16(init_param.cancelDialogText, "Stop playback?");
 	else
-		Utils_Utf8ToUtf16((char *)init_param.cancelDialogText, "Stop playback and close ElevenMPV-A?");
+		Utils_Utf8ToUtf16(init_param.cancelDialogText, "Stop playback and close ElevenMPV-A?");
 
 	init_param.eventHandler = Utils_NotificationEventHandler;
 	Utils_NotificationProgressBegin(&init_param);
@@ -142,9 +203,9 @@ void Menu_NotificationUpdate(void) {
 	if (paused) {
 		sceClibStrncpy((char *)update_param.notificationText, "\x9A\xF8", 2);
 		if ((metadata.has_meta) && (metadata.title[0] != '\0'))
-			Utils_Utf8ToUtf16((char *)&update_param.notificationText[1], metadata.title);
+			Utils_Utf8ToUtf16(&update_param.notificationText[1], metadata.title);
 		else
-			Utils_Utf8ToUtf16((char *)&update_param.notificationText[1], filename);
+			Utils_Utf8ToUtf16(&update_param.notificationText[1], filename);
 	}
 
 	char time[0x3F];
@@ -155,7 +216,7 @@ void Menu_NotificationUpdate(void) {
 			strlen = sceClibStrnlen(metadata.artist, 0x3F);
 			if (metadata.artist[strlen - 1] == '\n')
 				metadata.artist[strlen - 1] = ' ';
-			sceClibSnprintf(time, 0x3F, "%s | %d/%d | %s | %s", metadata.artist, selection, count, position_time, length_time);
+			sceClibSnprintf(time, 0x3F, "%s | %d/%d | %s | %s", metadata.artist, selection + 1, count, position_time, length_time);
 		}
 		else
 			sceClibSnprintf(time, 0x3F, "%d/%d | %s | %s", selection + 1, count, position_time, length_time);
@@ -163,7 +224,7 @@ void Menu_NotificationUpdate(void) {
 	else
 		sceClibSnprintf(time, 0x3F, "%d/%d | %s | %s", selection + 1, count, position_time, length_time);
 
-	Utils_Utf8ToUtf16((char *)update_param.notificationSubText, time);
+	Utils_Utf8ToUtf16(update_param.notificationSubText, time);
 
 	update_param.targetProgress = ((float)position / (float)length) * 100;
 	Utils_NotificationProgressUpdate(&update_param);
@@ -171,6 +232,8 @@ void Menu_NotificationUpdate(void) {
 
 static void Menu_InitMusic(char *path) {
 	Audio_Init(path);
+
+	Menu_LoadExternalCover();
 
 	if (Utils_IsDecoderUsed())
 		sceAudioOutSetAlcMode(config.alc_mode);
@@ -182,10 +245,10 @@ static void Menu_InitMusic(char *path) {
 	else
 		shellAudioSetEQModeForMusicPlayer(config.eq_mode);
 
-	filename = sceClibMspaceMalloc(mspace, 128);
+	filename = sceLibcMalloc(128);
 	sceClibSnprintf(filename, 128, Utils_Basename(path));
-	position_time = sceClibMspaceMalloc(mspace, 35);
-	length_time = sceClibMspaceMalloc(mspace, 35);
+	position_time = sceLibcMalloc(35);
+	length_time = sceLibcMalloc(35);
 	length_time_width = 0;
 
 	length = Audio_GetLengthSeconds();
@@ -200,6 +263,8 @@ static void Menu_InitMusic(char *path) {
 
 	if (config.notify_mode > 0 && !Utils_IsFinishedPlaylist())
 		Menu_NotificationBegin();
+
+	sceClibSnprintf(order, 10, "%d/%d", selection + 1, count);
 }
 
 static void Music_HandleNext(SceBool forward, int state) {
@@ -236,18 +301,36 @@ static void Music_HandleNext(SceBool forward, int state) {
 
 	Audio_Stop();
 
-	sceClibMspaceFree(mspace, filename);
-	sceClibMspaceFree(mspace, length_time);
-	sceClibMspaceFree(mspace, position_time);
+	sceLibcFree(filename);
+	sceLibcFree(length_time);
+	sceLibcFree(position_time);
+
+	if ((metadata.has_meta) && (metadata.cover_image) && !ext_cover_loaded) {
+		vita2d_wait_rendering_done();
+		vita2d_free_texture(metadata.cover_image);
+		tex_filter_on = SCE_FALSE;
+	}
 
 	Audio_Term();
+
+	/*if (metadata.has_meta && (external_cover[0] != '\0')) {
+		empty_metadata.cover_image = metadata.cover_image;
+		empty_metadata.has_meta = SCE_TRUE;
+	}*/
+	// Clear metadata struct
+	sceClibMemcpy(&metadata, &empty_metadata, sizeof(Audio_Metadata));
+	//sceClibMemset(&empty_metadata, 0, sizeof(Audio_Metadata));
+
 	Menu_InitMusic(playlist[selection]);
 }
 
 void Menu_PlayAudio(char *path) {
 
-	vita2d_set_vblank_wait(1);
+	Textures_UnloadUnused();
+
 	sceAppMgrAcquireBgmPortForMusicPlayer();
+
+	sceClibMemset(&order, 0, 10);
 
 	Menu_GetMusicList();
 	Menu_InitMusic(path);
@@ -258,8 +341,6 @@ void Menu_PlayAudio(char *path) {
 	int seek_detect = -1, max_items = 5;
 	SceBool isInSettings = SCE_FALSE;
 	SceUInt32 pof_timer = 0;
-	char order[10];
-	sceClibMemset(&order, 0, 10);
 
 	if (vshSblAimgrIsDolce())
 		max_items = 4;
@@ -277,8 +358,17 @@ void Menu_PlayAudio(char *path) {
 	Motion_SetReleaseTimer(1000000 * config.motion_timer);
 	Motion_SetAngleThreshold(config.motion_degree);
 
+	Menu_LoadExternalCover();
+
 	while(SCE_TRUE) {
 		if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_FG, SCE_KERNEL_EVF_WAITMODE_AND, NULL) && !isInSettings) {
+
+			if (!tex_filter_on) {
+				if ((metadata.has_meta) && (metadata.cover_image))
+					vita2d_texture_set_filters(metadata.cover_image, SCE_GXM_TEXTURE_FILTER_LINEAR, SCE_GXM_TEXTURE_FILTER_LINEAR);
+				tex_filter_on = SCE_TRUE;
+			}
+
 			vita2d_start_drawing();
 			vita2d_clear_screen();
 
@@ -288,27 +378,38 @@ void Menu_PlayAudio(char *path) {
 			vita2d_draw_fill_circle(BTN_SETTINGS_X, BTN_TOPBAR_Y + 24, 3, RGBA8(255, 255, 255, 255));
 			vita2d_draw_fill_circle(BTN_SETTINGS_X, BTN_TOPBAR_Y + 39, 3, RGBA8(255, 255, 255, 255));
 
-			vita2d_draw_rectangle(0, 124, 960, 400, RGBA8(45, 48, 50, 255)); // Draw info box
-			
+			vita2d_draw_rectangle(410, 124, 550, 400, RGBA8(45, 48, 50, 255)); // Draw info box
+
+#ifdef DEBUG
+			vita2d_pvf_draw_textf(font, 50, 100, RGBA8(255, 0, 0, 255), 1, "DEBUG BUILD, DO NOT REDISTRIBUTE. LPDDR2 BUDGET: %f MB", budget_info.freeLPDDR2 / 1024.0 / 1024.0);
+#endif
+
+			if ((metadata.has_meta) && (metadata.cover_image))
+				vita2d_draw_texture_scale(metadata.cover_image, 0, 124, 400.0f / vita2d_texture_get_width(metadata.cover_image), 400.0f / vita2d_texture_get_height(metadata.cover_image));
+			else {
+				vita2d_draw_rectangle(0, 124, 400, 400, RGBA8(71, 71, 71, 255));
+				vita2d_draw_fill_circle(NOCOVER_X, NOCOVER_Y, 80, RGBA8(45, 48, 50, 255));
+				vita2d_draw_fill_circle(NOCOVER_X, NOCOVER_Y, 20, RGBA8(71, 71, 71, 255));
+			}
+
 			if ((metadata.has_meta) && (metadata.title[0] != '\0') && (metadata.artist[0] != '\0')) {
-				vita2d_pvf_draw_text(font, METADATA1_X, METADATA_Y, RGBA8(255, 255, 255, 255), 1, metadata.title);
-				vita2d_pvf_draw_text(font, METADATA1_X, METADATA_Y + 30, RGBA8(255, 255, 255, 255), 1, metadata.artist);
+				vita2d_pvf_draw_text(font, METADATA1_X, METADATA1_Y, RGBA8(255, 255, 255, 255), 1, metadata.title);
+				vita2d_pvf_draw_text(font, METADATA1_X, METADATA1_Y + 30, RGBA8(255, 255, 255, 255), 1, metadata.artist);
 			}
 			else if ((metadata.has_meta) && (metadata.title[0] != '\0'))
-				vita2d_pvf_draw_text(font, METADATA1_X, METADATA_Y + (80 - vita2d_pvf_text_height(font, 1, metadata.title)) + 15, RGBA8(255, 255, 255, 255), 1, metadata.title);
+				vita2d_pvf_draw_text(font, METADATA1_X, METADATA1_Y, RGBA8(255, 255, 255, 255), 1, metadata.title);
 			else
-				vita2d_pvf_draw_text(font, METADATA1_X, METADATA_Y + (80 - vita2d_pvf_text_height(font, 1, filename)) + 15, RGBA8(255, 255, 255, 255), 1, filename);
+				vita2d_pvf_draw_text(font, METADATA1_X, METADATA1_Y, RGBA8(255, 255, 255, 255), 1, filename);
 
 			if ((metadata.has_meta) && (metadata.album[0] != '\0'))
-				vita2d_pvf_draw_textf(font, METADATA2_X, METADATA_Y, RGBA8(255, 255, 255, 255), 1, "Album: %s\n", metadata.album);
+				vita2d_pvf_draw_textf(font, METADATA2_X, METADATA2_Y, RGBA8(255, 255, 255, 255), 1, "Album: %s\n", metadata.album);
 
 			if ((metadata.has_meta) && (metadata.year[0] != '\0'))
-				vita2d_pvf_draw_textf(font, METADATA2_X, METADATA_Y + 30, RGBA8(255, 255, 255, 255), 1, "Year: %s\n", metadata.year);
+				vita2d_pvf_draw_textf(font, METADATA2_X, METADATA2_Y + 30, RGBA8(255, 255, 255, 255), 1, "Year: %s\n", metadata.year);
 
 			if ((metadata.has_meta) && (metadata.genre[0] != '\0'))
-				vita2d_pvf_draw_textf(font, METADATA2_X, METADATA_Y + 60, RGBA8(255, 255, 255, 255), 1, "Genre: %s\n", metadata.genre);
+				vita2d_pvf_draw_textf(font, METADATA2_X, METADATA2_Y + 60, RGBA8(255, 255, 255, 255), 1, "Genre: %s\n", metadata.genre);
 
-			sceClibSnprintf(order, 10, "%d/%d", selection + 1, count);
 			vita2d_pvf_draw_text(font, 910 - vita2d_pvf_text_width(font, 1, order), 446, RGBA8(255, 255, 255, 255), 1, order);
 			
 			if (!Audio_IsPaused())
@@ -343,14 +444,13 @@ void Menu_PlayAudio(char *path) {
 			Menu_ConvertSecondsToString(position_time, Audio_GetPositionSeconds());
 			vita2d_pvf_draw_text(font, SEEK_X, 480, RGBA8(255, 255, 255, 255), 1, position_time);
 			vita2d_pvf_draw_text(font, 910 - length_time_width, 480, RGBA8(255, 255, 255, 255), 1, length_time);
-			vita2d_draw_rectangle(SEEK_X, 490, SEEK_WIDTH, 4, RGBA8(97, 97, 97, 255));
+			vita2d_draw_rectangle(SEEK_X, 490, SEEK_WIDTH, 4, RGBA8(71, 71, 71, 255));
 			vita2d_draw_rectangle(SEEK_X, 490, (((double)Audio_GetPosition() / (double)Audio_GetLength()) * SEEK_WIDTH_FLOAT), 4, RGBA8(255, 255, 255, 255));
 
 			vita2d_end_drawing();
 			vita2d_wait_rendering_done();
 			vita2d_end_shfb();
 
-			Utils_ReadControls();
 			Touch_Update();
 
 			if (pressed & SCE_CTRL_ENTER || Touch_GetTapRecState(TOUCHREC_TAP_PLAY)) {
@@ -445,6 +545,7 @@ void Menu_PlayAudio(char *path) {
 			vita2d_draw_texture(config.eq_mode == 2 ? radio_on : radio_off, 850, 270);
 			vita2d_draw_texture(config.eq_mode == 3 ? radio_on : radio_off, 850, 342);
 			vita2d_draw_texture(config.eq_mode == 4 ? radio_on : radio_off, 850, 414);
+
 			if (!vshSblAimgrIsDolce())
 				vita2d_draw_texture(config.motion_mode == SCE_TRUE ? toggle_on : toggle_off, 850, 486);
 
@@ -452,7 +553,6 @@ void Menu_PlayAudio(char *path) {
 			vita2d_wait_rendering_done();
 			vita2d_end_shfb();
 
-			Utils_ReadControls();
 			Touch_Update();
 
 			if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK)) {
@@ -529,7 +629,7 @@ void Menu_PlayAudio(char *path) {
 		if (Utils_IsFinishedPlaylist())
 			break;
 
-		if (paused)
+		if (paused && config.power_saving)
 			if ((sceKernelGetProcessTimeLow() - pof_timer) > 60000000 * config.power_timer)
 				break;
 	}
@@ -538,12 +638,26 @@ void Menu_PlayAudio(char *path) {
 		Utils_NotificationEnd();
 	}
 
-	sceClibMspaceFree(mspace, filename);
-	sceClibMspaceFree(mspace, length_time);
-	sceClibMspaceFree(mspace, position_time);
+	sceLibcFree(filename);
+	sceLibcFree(length_time);
+	sceLibcFree(position_time);
+
+	Menu_UnloadExternalCover();
+	ext_cover_is_jpeg = SCE_FALSE;
+
+	if ((metadata.has_meta) && (metadata.cover_image)) {
+		vita2d_wait_rendering_done();
+		vita2d_free_texture(metadata.cover_image);
+		tex_filter_on = SCE_FALSE;
+	}
+	sceClibMemset(&external_cover, 0, 512);
 
 	Audio_Stop();
 	Audio_Term();
+
+	// Clear metadata struct
+	sceClibMemcpy(&metadata, &empty_metadata, sizeof(Audio_Metadata));
+
 	isFirstTimeInit = SCE_TRUE;
 	count = 0;
 	initial_selection = 0;
@@ -552,5 +666,8 @@ void Menu_PlayAudio(char *path) {
 	sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_FINISHED_PLAYLIST);
 	sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_POWER_LOCKED);
 	vita2d_set_vblank_wait(0);
+
+	Textures_LoadUnused();
+
 	Menu_DisplayFiles();
 }

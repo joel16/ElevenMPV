@@ -7,19 +7,20 @@
 #define BUTTON_HEIGHT 68
 
 #define BTN_SETTINGS_X 900
+#define BTN_SETTINGS_Y 57
 
 #define BTN_MAIN_Y (124 + ((400 - BUTTON_HEIGHT) / 2))
 #define BTN_SUB_Y (BTN_MAIN_Y + 100)
 
-#define BTN_PLAY_X (480 - BUTTON_WIDTH / 2)
+#define BTN_PLAY_X (410 + ((550 - BUTTON_WIDTH) / 2))
 #define BTN_REW_X (BTN_PLAY_X - 136)
 #define BTN_FF_X (BTN_PLAY_X + 136)
 #define BTN_SHUFFLE_X (BTN_PLAY_X - 90)
 #define BTN_REPEAT_X (BTN_PLAY_X + 90)
 
-#define SEEK_X 50
-#define SEEK_WIDTH 860
-#define SEEK_WIDTH_FLOAT 860.0
+#define SEEK_X 460
+#define SEEK_WIDTH 450
+#define SEEK_WIDTH_FLOAT 450.0
 
 typedef enum SceSystemGestureTouchRecognizerTypes {
 	TOUCHREC_TAP_PLAY,

@@ -1,62 +1,93 @@
 #include <psp2/kernel/clib.h>
-#include <FLAC/metadata.h>
+#include <psp2/io/fcntl.h> 
+#include <psp2/libc.h>
 
 #include "audio.h"
 #include "config.h"
 #include "touch.h"
-#define DR_FLAC_IMPLEMENTATION
-#define DRFLAC_ARM
-#define DRFLAC_SUPPORT_NEON
-#define DR_FLAC_NO_OGG
 #include "dr_flac.h"
+#include "menu_audioplayer.h"
 
 static drflac *flac;
 static drflac_uint64 frames_read = 0;
+static SceUID flac_fd = 0;
 
-int FLAC_Init(const char *path) {
-	flac = drflac_open_file(path, NULL);
-	if (flac == NULL)
-		return -1;
+void metadata_cb(void* pUserData, drflac_metadata* pMetadata) {
 
-	FLAC__StreamMetadata *tags;
-	if (FLAC__metadata_get_tags(path, &tags)) {
-		for (int i = 0; i < tags->data.vorbis_comment.num_comments; i++)  {
-			char *tag = (char *)tags->data.vorbis_comment.comments[i].entry;
+	if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_PICTURE) {
+		if (pMetadata->data.picture.type == DRFLAC_PICTURE_TYPE_COVER_FRONT) {
+			if (!sceClibStrncasecmp("image/jpg", pMetadata->data.picture.mime, 9) || !sceClibStrncasecmp("image/jpeg", pMetadata->data.picture.mime, 10)) {
+				Menu_UnloadExternalCover();
+				vita2d_JPEG_ARM_decoder_initialize();
+				metadata.cover_image = vita2d_load_JPEG_ARM_buffer(pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize, 0, 0, 0);
+				vita2d_JPEG_ARM_decoder_finish();
+				metadata.has_meta = SCE_TRUE;
+			}
+			else if (!sceClibStrncasecmp("image/png", pMetadata->data.picture.mime, 9)) {
+				Menu_UnloadExternalCover();
+				metadata.cover_image = vita2d_load_PNG_buffer(pMetadata->data.picture.pPictureData);
+				metadata.has_meta = SCE_TRUE;
+			}
+		}
+	}
+	else if (pMetadata->type == DRFLAC_METADATA_BLOCK_TYPE_VORBIS_COMMENT) {
+		unsigned int len;
+		drflac_vorbis_comment_iterator iter;
+		drflac_init_vorbis_comment_iterator(&iter, pMetadata->data.vorbis_comment.commentCount, pMetadata->data.vorbis_comment.pComments);
+		for (int i = 0; i < pMetadata->data.vorbis_comment.commentCount; i++) {
+			const char* tag = drflac_next_vorbis_comment(&iter, &len);
 
 			if (!sceClibStrncasecmp("TITLE=", tag, 6)) {
 				metadata.has_meta = SCE_TRUE;
-				sceClibSnprintf(metadata.title, 31, "%s\n", tag + 6);
+				sceClibSnprintf(metadata.title, len, "%s\n", tag + 6);
 			}
 
 			if (!sceClibStrncasecmp("ALBUM=", tag, 6)) {
 				metadata.has_meta = SCE_TRUE;
-				sceClibSnprintf(metadata.album, 31, "%s\n", tag + 6);
+				sceClibSnprintf(metadata.album, len, "%s\n", tag + 6);
 			}
 
 			if (!sceClibStrncasecmp("ARTIST=", tag, 7)) {
 				metadata.has_meta = SCE_TRUE;
-				sceClibSnprintf(metadata.artist, 31, "%s\n", tag + 7);
+				sceClibSnprintf(metadata.artist, len, "%s\n", tag + 7);
 			}
 
 			if (!sceClibStrncasecmp("DATE=", tag, 5)) {
 				metadata.has_meta = SCE_TRUE;
-				sceClibSnprintf(metadata.year, 31, "%d\n", atoi(tag + 5));
+				sceClibSnprintf(metadata.year, 4, "%d\n", atoi(tag + 5));
 			}
 
 			if (!sceClibStrncasecmp("COMMENT=", tag, 8)) {
 				metadata.has_meta = SCE_TRUE;
-				sceClibSnprintf(metadata.comment, 31, "%s\n", tag + 8);
+				sceClibSnprintf(metadata.comment, len, "%s\n", tag + 8);
 			}
 
 			if (!sceClibStrncasecmp("GENRE=", tag, 6)) {
 				metadata.has_meta = SCE_TRUE;
-				sceClibSnprintf(metadata.genre, 31, "%s\n", tag + 6);
+				sceClibSnprintf(metadata.genre, len, "%s\n", tag + 6);
 			}
 		}
 	}
+}
 
-	if (tags)
-		FLAC__metadata_object_delete(tags);
+size_t dr_flac_read(void* pUserData, void* pBufferOut, size_t bytesToRead) {
+	return sceIoRead(flac_fd, pBufferOut, bytesToRead);
+}
+
+drflac_bool32 dr_flac_seek(void* pUserData, int offset, drflac_seek_origin origin) {
+	if (sceIoLseek32(flac_fd, offset, origin) < 0)
+		return DRFLAC_FALSE;
+	else
+		return DRFLAC_TRUE;
+}
+
+int FLAC_Init(const char *path) {
+
+	flac_fd = sceIoOpen(path, SCE_O_RDONLY, 0777);
+
+	flac = drflac_open_with_metadata(dr_flac_read, dr_flac_seek, metadata_cb, NULL, NULL);
+	if (flac == NULL)
+		return -1;
 
 	return 0;
 }
@@ -101,19 +132,6 @@ void FLAC_Term(void) {
 	if (metadata.has_meta)
 		metadata.has_meta = SCE_FALSE;
 
+	sceIoClose(flac_fd);
 	drflac_close(flac);
-}
-
-// Functions needed for libFLAC
-
-int chmod(const char *pathname, mode_t mode) {
-	return 0;
-}
-
-int chown(const char *path, int owner, int group) {
-	return 0;
-}
-
-int utime(const char *filename, const void *buf) {
-	return 0;
 }

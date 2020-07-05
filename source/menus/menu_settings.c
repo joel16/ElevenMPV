@@ -72,7 +72,6 @@ static void Menu_DisplayDeviceSettings(void) {
         vita2d_wait_rendering_done();
         vita2d_end_shfb();
 
-        Utils_ReadControls();
         Touch_Update();
 
         if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK))
@@ -103,10 +102,10 @@ static void Menu_DisplaySortSettings(void) {
 	int selection = 0, max_items = 3;
 
 	const char *menu_items[] = {
-		"By name (ascending)",
-		"By name (descending)",
-		"By size (largest first)",
-		"By size (smallest first)"
+		"By Name (Ascending)",
+		"By Name (Descending)",
+		"By Size (Largest First)",
+		"By Size (Smallest First)"
 	};
 
 	while (SCE_TRUE) {
@@ -145,7 +144,6 @@ static void Menu_DisplaySortSettings(void) {
 		vita2d_wait_rendering_done();
 		vita2d_end_shfb();
 
-		Utils_ReadControls();
 		Touch_Update();
 
 		if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK))
@@ -167,7 +165,7 @@ static void Menu_DisplaySortSettings(void) {
 }
 
 static void Menu_DisplayAudioSettings(void) {
-	int selection = 0, max_items = 5;
+	int selection = 0, max_items = 6;
 
 	const char *menu_items[] = {
 		"EQ: Off",
@@ -175,7 +173,8 @@ static void Menu_DisplayAudioSettings(void) {
 		"EQ: Pop",
 		"EQ: Jazz",
 		"EQ: Unique",
-		"ALC"
+		"ALC",
+		"Limit Volume Whith EQ"
 	};
 
 	while (SCE_TRUE) {
@@ -205,18 +204,28 @@ static void Menu_DisplayAudioSettings(void) {
 			}
 		}
 
-		vita2d_draw_texture(config.eq_mode == 0 ? radio_on : radio_off, 850, 126);
-		vita2d_draw_texture(config.eq_mode == 1 ? radio_on : radio_off, 850, 198);
-		vita2d_draw_texture(config.eq_mode == 2 ? radio_on : radio_off, 850, 270);
-		vita2d_draw_texture(config.eq_mode == 3 ? radio_on : radio_off, 850, 342);
-		vita2d_draw_texture(config.eq_mode == 4 ? radio_on : radio_off, 850, 414);
-		vita2d_draw_texture(config.alc_mode == SCE_TRUE ? toggle_on : toggle_off, 850, 486);
+		if (selection != 6) {
+			vita2d_draw_texture(config.eq_mode == 0 ? radio_on : radio_off, 850, 126);
+			vita2d_draw_texture(config.eq_mode == 1 ? radio_on : radio_off, 850, 198);
+			vita2d_draw_texture(config.eq_mode == 2 ? radio_on : radio_off, 850, 270);
+			vita2d_draw_texture(config.eq_mode == 3 ? radio_on : radio_off, 850, 342);
+			vita2d_draw_texture(config.eq_mode == 4 ? radio_on : radio_off, 850, 414);
+			vita2d_draw_texture(config.alc_mode == SCE_TRUE ? toggle_on : toggle_off, 850, 486);
+		}
+		else {
+			vita2d_draw_texture(config.eq_mode == 1 ? radio_on : radio_off, 850, 126);
+			vita2d_draw_texture(config.eq_mode == 2 ? radio_on : radio_off, 850, 198);
+			vita2d_draw_texture(config.eq_mode == 3 ? radio_on : radio_off, 850, 270);
+			vita2d_draw_texture(config.eq_mode == 4 ? radio_on : radio_off, 850, 342);
+			vita2d_draw_texture(config.alc_mode == SCE_TRUE ? toggle_on : toggle_off, 850, 414);
+			vita2d_draw_texture(config.eq_volume == SCE_TRUE ? toggle_on : toggle_off, 850, 486);
+		}
+
 
 		vita2d_end_drawing();
 		vita2d_wait_rendering_done();
 		vita2d_end_shfb();
 
-		Utils_ReadControls();
 		Touch_Update();
 
 		if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK))
@@ -231,12 +240,15 @@ static void Menu_DisplayAudioSettings(void) {
 		Utils_SetMin(&selection, max_items, 0);
 
 		if (pressed & SCE_CTRL_ENTER) {
-			if (selection != 5) {
+			if (selection < 5) {
 				config.eq_mode = selection;
 				Dirbrowse_PopulateFiles(SCE_TRUE);
 			}
-			else {
+			else if (selection == 5) {
 				config.alc_mode = !config.alc_mode;
+			}
+			else if (selection == 6) {
+				config.eq_volume = !config.eq_volume;
 			}
 		}
 	}
@@ -359,7 +371,6 @@ static void Menu_DisplayControlsSettings(void) {
 
 		if (!ime_active) {
 
-			Utils_ReadControls();
 			Touch_Update();
 
 			if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK))
@@ -483,7 +494,6 @@ static void Menu_DisplayPowerSettings(void) {
 
 		if (!ime_active) {
 
-			Utils_ReadControls();
 			Touch_Update();
 
 			if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK))
@@ -569,7 +579,6 @@ static void Menu_DisplaySystemSettings(void) {
 		vita2d_wait_rendering_done();
 		vita2d_end_shfb();
 
-		Utils_ReadControls();
 		Touch_Update();
 
 		if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK))
@@ -594,15 +603,15 @@ void Menu_DisplaySettings(void) {
 	int selection = 0, max_items = 5;
 
 	if (vshSblAimgrIsDolce())
-		max_items = 3;
+		max_items = 4;
 
 	const char *menu_items[] = {
 		"Device",
 		"Sort",
 		"Audio",
 		"Power Saving",
-		"Motion Controls",
-		"Notifications"
+		"Notifications",
+		"Motion Controls"
 	};
 
 	while (SCE_TRUE) {
@@ -636,7 +645,6 @@ void Menu_DisplaySettings(void) {
 		vita2d_wait_rendering_done();
 		vita2d_end_shfb();
 
-		Utils_ReadControls();
 		Touch_Update();
 
 		if ((pressed & SCE_CTRL_CANCEL) || Touch_GetTapRecState(TOUCHREC_TAP_BACK)) {
@@ -666,10 +674,10 @@ void Menu_DisplaySettings(void) {
 				Menu_DisplayPowerSettings();
 				break;
 			case 4:
-				Menu_DisplayControlsSettings();
+				Menu_DisplaySystemSettings();
 				break;
 			case 5:
-				Menu_DisplaySystemSettings();
+				Menu_DisplayControlsSettings();
 				break;
 			}
 		}

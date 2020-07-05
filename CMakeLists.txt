@@ -16,15 +16,15 @@ add_custom_command(
 )
 
 project(ElevenMPV)
-dolce_gen_libs(SceShellSvc_stubs
-  SceShellSvc.yml
-  LIB SceShellSvc_stub_weak)
 dolce_gen_libs(SceLibc_stubs
   SceLibc.yml
   LIB SceLibc_stub_weak)
+dolce_gen_libs(SceShellSvc_stubs
+  SceShellSvc.yml
+  LIB SceShellSvc_stub_weak)
 set(VITA_APP_NAME "Eleven Music Player")
 set(VITA_TITLEID  "ELEVENMPV")
-set(VITA_VERSION  "03.50")
+set(VITA_VERSION  "03.70")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -Wl,--no-wchar-size-warning,--no-enum-size-warning -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -61,23 +61,23 @@ add_executable(${PROJECT_NAME}
   source/audio/xm.c
   source/audio/aac.c
   source/audio/at9.c
+  source/audio/id3.c
   source/menus/menu_audioplayer.c
   source/menus/menu_displayfiles.c
   source/menus/menu_settings.c
 )
 
 target_link_libraries(${PROJECT_NAME}
-  ShellAudio
   vita2d_sys
-  FLAC
   opusfile
   opus
   vorbisfile
   vorbis
   ogg
   xmp-lite
-  m
-  mpg123
+  png
+  z
+  ShellAudio
   taihen_stub
   SceAppMgr_stub
   SceAppUtil_stub
@@ -89,20 +89,21 @@ target_link_libraries(${PROJECT_NAME}
   SceShellSvc_stub
   SceSysmodule_stub
   SceTouch_stub
-  SceFios2_stub
   SceShellSvc_stub_weak
   SceSystemGesture_stub
   SceIme_stub
-  ScePvf_stub
   SceMotion_stub
   SceVshBridge_stub
   SceLibc_stub_weak
   SceNotificationUtil_stub
+  SceJpegArm_stub
+  ScePvf_stub
 )
 
-set(DOLCE_MKSFOEX_FLAGS "${DOLCE_MKSFOEX_FLAGS} -d ATTRIBUTE=17338760 -s CATEGORY=gdc" -d PARENTAL_LEVEL=1)
+set(DOLCE_MKSFOEX_FLAGS "${DOLCE_MKSFOEX_FLAGS} -d ATTRIBUTE=17338760 -s CATEGORY=gdc -d PARENTAL_LEVEL=1")
+set(DOLCE_ELF_CREATE_FLAGS "${DOLCE_ELF_CREATE_FLAGS} -h 544288")
 
-dolce_create_self(${PROJECT_NAME}.self ${PROJECT_NAME} UNSAFE BOOT_PARAM ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin)
+dolce_create_self(eboot.bin ${PROJECT_NAME} UNSAFE BOOT_PARAM ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin)
 
 add_executable(exit_module
   module/source/main.c
@@ -118,7 +119,7 @@ target_link_libraries(exit_module
 
 dolce_create_self(exit_module.skprx exit_module CONFIG module/exit_module.yml UNSAFE)
 
-dolce_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
+dolce_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
   FILE sce_sys/icon0.png sce_sys/icon0.png
@@ -126,6 +127,7 @@ dolce_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} ${PROJECT_NAME}.self
   FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
   FILE sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
   FILE sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-  FILE ${CMAKE_CURRENT_BINARY_DIR}/exit_module.skprx module/exit_module.skprx
-  FILE res/texture.gxt texture.gxt
+  FILE ${CMAKE_CURRENT_BINARY_DIR}/exit_module.skprx module/kernel/exit_module.skprx
+  FILE res/tex_common.gxt tex_common.gxt
+  FILE res/tex_dirbrowse.gxt tex_dirbrowse.gxt
 )

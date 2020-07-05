@@ -3,6 +3,7 @@
 #include <psp2/io/fcntl.h>
 #include <psp2/io/stat.h>
 #include <psp2/libc.h>
+#include <psp2/gxm.h>
 
 #include "common.h"
 #include "config.h"
@@ -14,22 +15,23 @@
 
 File *files = NULL;
 
-extern void* mspace;
-void* sceClibMspaceCalloc(void* space, size_t num, size_t size);
+static int xdelta_topbar = 0, xdelta_file = 0;
+static SceBool flip_topbar = SCE_FALSE, flip_file = SCE_FALSE;
+static int delay_topbar = 0, delay_file = 0;
 
 static void Dirbrowse_RecursiveFree(File *node) {
 	if (node == NULL) // End of list
 		return;
-	
+
 	Dirbrowse_RecursiveFree(node->next); // Nest further
-	sceClibMspaceFree(mspace, node); // Free memory
+
+	sceLibcFree(node); // Free memory
 }
 
 static void Dirbrowse_SaveLastDirectory(void) {
-	char *buf = sceClibMspaceMalloc(mspace, 256);
-	int len = sceClibSnprintf(buf, 256, "%s\n", cwd);
-	FS_WriteFile("savedata0:lastdir.txt", buf, len);
-	sceClibMspaceFree(mspace, buf);
+	int len = sceClibStrnlen(cwd, 256);
+	Utils_WriteSafeMem((void*)&len, 4, 0);
+	Utils_WriteSafeMem((void*)cwd, len, 4);
 }
 
 static int cmpstringp(const void *p1, const void *p2) {
@@ -64,7 +66,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 
 	if (R_SUCCEEDED(dir = sceIoDopen(cwd))) {
 		int entryCount = 0;
-		SceIoDirent *entries = (SceIoDirent *)sceClibMspaceCalloc(mspace, MAX_FILES, sizeof(SceIoDirent));
+		SceIoDirent *entries = (SceIoDirent *)sceLibcCalloc(MAX_FILES, sizeof(SceIoDirent));
 
 		while (sceIoDread(dir, &entries[entryCount]) > 0)
 			entryCount++;
@@ -74,7 +76,8 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 
 		for (int i = -1; i < entryCount; i++) {
 			// Allocate Memory
-			File *item = (File *)sceClibMspaceMalloc(mspace, sizeof(File));
+			File *item = (File *)sceLibcMalloc(sizeof(File));
+
 			sceClibMemset(item, 0, sizeof(File));
 
 			if ((sceClibStrcmp(cwd, root_path)) && (i == -1) && (!parent_dir_set)) {
@@ -88,7 +91,6 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 					continue;
 
 				item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
-
 				// Copy File Name
 				sceLibcStrcpy(item->name, entries[i].d_name);
 				sceLibcStrcpy(item->ext, FS_GetFileExt(item->name));
@@ -110,7 +112,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 			}
 		}
 
-		sceClibMspaceFree(mspace, entries);
+		sceLibcFree(entries);
 	}
 	else
 		return dir;
@@ -126,7 +128,45 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 }
 
 void Dirbrowse_DisplayFiles(void) {
-	vita2d_pvf_draw_text(font, 102, 40 + ((72 - vita2d_pvf_text_height(font, 1, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 1, cwd);
+
+	int width = vita2d_pvf_text_width(font, 1, cwd);
+	int delta = 0;
+
+	if (width > 750) {
+		delta = width - 750;
+		switch (flip_topbar) {
+		case SCE_FALSE:
+			if (xdelta_topbar > -delta)
+				xdelta_topbar--;
+			else {
+				if (delay_topbar < FLIP_DELAY)
+					delay_topbar++;
+				else {
+					delay_topbar = 0;
+					flip_topbar = SCE_TRUE;
+				}
+			}
+			break;
+		case SCE_TRUE:
+			if (xdelta_topbar < 0)
+				xdelta_topbar++;
+			else {
+				if (delay_topbar < FLIP_DELAY)
+					delay_topbar++;
+				else {
+					delay_topbar = 0;
+					flip_topbar = SCE_FALSE;
+				}
+			}
+			break;
+		}
+	}
+	else
+		xdelta_topbar = 0;
+
+	vita2d_set_region_clip(SCE_GXM_REGION_CLIP_OUTSIDE, 102, 0, 850, 544);
+	vita2d_pvf_draw_text(font, 102 + xdelta_topbar, 40 + ((72 - vita2d_pvf_text_height(font, 1, cwd)) / 2) + 20, RGBA8(255, 255, 255, 255), 1, cwd);
+	vita2d_set_region_clip(SCE_GXM_REGION_CLIP_OUTSIDE, 0, 0, 960, 544);
 
 	if (!(!sceClibStrcmp(cwd, root_path)))
 		vita2d_draw_texture(icon_back, BTN_BACK_X, BTN_TOPBAR_Y);
@@ -135,10 +175,12 @@ void Dirbrowse_DisplayFiles(void) {
 	File *file = files; // Draw file list
 
 	for(; file != NULL; file = file->next) {
+
 		if (printed == FILES_PER_PAGE) // Limit the files per page
 			break;
 
 		if (position < FILES_PER_PAGE || i > (position - FILES_PER_PAGE)) {
+
 			if (i == position)
 				vita2d_draw_rectangle(0, 112 + (72 * printed), 960, 72, RGBA8(230, 230, 230, 255));
 
@@ -154,7 +196,47 @@ void Dirbrowse_DisplayFiles(void) {
 
 			if (sceClibStrncmp(file->name, "..", 2) == 0)
 				vita2d_pvf_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 1, "Parent folder");
-			else 
+			else if (i == position) {
+
+				width = vita2d_pvf_text_width(font, 1, file->name);
+
+				if (width > 750) {
+					delta = width - 750;
+					switch (flip_file) {
+					case SCE_FALSE:
+						if (xdelta_file > -delta)
+							xdelta_file--;
+						else {
+							if (delay_file < FLIP_DELAY)
+								delay_file++;
+							else {
+								delay_file = 0;
+								flip_file = SCE_TRUE;
+							}
+						}
+						break;
+					case SCE_TRUE:
+						if (xdelta_file < 0)
+							xdelta_file++;
+						else {
+							if (delay_file < FLIP_DELAY)
+								delay_file++;
+							else {
+								delay_file = 0;
+								flip_file = SCE_FALSE;
+							}
+						}
+						break;
+					}
+				}
+				else
+					xdelta_file = 0;
+
+				vita2d_set_region_clip(SCE_GXM_REGION_CLIP_OUTSIDE, 102, 0, 960, 544);
+				vita2d_pvf_draw_text(font, 102 + xdelta_file, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 1, file->name);
+				vita2d_set_region_clip(SCE_GXM_REGION_CLIP_OUTSIDE, 0, 0, 960, 544);
+			}
+			else
 				vita2d_pvf_draw_text(font, 102, 120 + (72 / 2) + (72 * printed), RGBA8(51, 51, 51, 255), 1, file->name);
 
 			printed++; // Increase printed counter
@@ -193,13 +275,15 @@ void Dirbrowse_OpenFile(void) {
 	}
 	else if ((!sceClibStrncasecmp(file->ext, "flac", 4)) || (!sceClibStrncasecmp(file->ext, "it", 4)) || (!sceClibStrncasecmp(file->ext, "mod", 4))
 		|| (!sceClibStrncasecmp(file->ext, "mp3", 4)) || (!sceClibStrncasecmp(file->ext, "ogg", 4)) || (!sceClibStrncasecmp(file->ext, "opus", 4))
-		|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4))
-		|| (!sceClibStrncasecmp(file->ext, "at9", 4)) || (!sceClibStrncasecmp(file->ext, "m4a", 4)) || (!sceClibStrncasecmp(file->ext, "aac", 4)))
+		|| (!sceClibStrncasecmp(file->ext, "s3m", 4)) || (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4))
+		|| (!sceClibStrncasecmp(file->ext, "at9", 4)) || (!sceClibStrncasecmp(file->ext, "m4a", 4)) || (!sceClibStrncasecmp(file->ext, "aac", 4))) {
 		Menu_PlayAudio(path);
+	}
 }
 
 // Navigate to Folder
 int Dirbrowse_Navigate(SceBool parent) {
+
 	File *file = Dirbrowse_GetFileIndex(position); // Get index
 	
 	if (file == NULL)
@@ -210,7 +294,8 @@ int Dirbrowse_Navigate(SceBool parent) {
 		char *slash = NULL;
 
 		// Find last '/' in working directory
-		int i = sceLibcStrlen(cwd) - 2; for(; i >= 0; i--) {
+		int i = sceLibcStrlen(cwd) - 2; 
+		for(; i >= 0; i--) {
 			// Slash discovered
 			if (cwd[i] == '/') {
 				slash = cwd + i + 1; // Save pointer
@@ -218,9 +303,10 @@ int Dirbrowse_Navigate(SceBool parent) {
 			}
 		}
 
+		//slash = sceClibStrrchr(cwd, '/');
+
 		slash[0] = 0; // Terminate working directory
 	}
-
 	// Normal folder
 	else {
 		if (file->is_dir) {
@@ -232,6 +318,5 @@ int Dirbrowse_Navigate(SceBool parent) {
 	}
 
 	Dirbrowse_SaveLastDirectory();
-
 	return 0; // Return success
 }

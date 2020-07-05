@@ -7,6 +7,7 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/sysmodule.h> 
 #include <psp2/shellutil.h>
+#include <psp2/display.h>
 #include <psp2/power.h> 
 #include <psp2/ime.h> 
 #include <psp2/appmgr.h> 
@@ -21,9 +22,11 @@
 #include "common.h"
 #include "vitaaudiolib.h"
 
+#define ROUND_UP(x, a)	((((unsigned int)x)+((a)-1u))&(~((a)-1u)))
+
 typedef struct SceAppMgrEvent { // size is 0x64
-	int event;						/* Event ID */
-	SceUID appId;						/* Application ID. Added when required by the event */
+	int event;				/* Event ID */
+	SceUID appId;			/* Application ID. Added when required by the event */
 	char  param[56];		/* Parameters to pass with the event */
 } SceAppMgrEvent;
 
@@ -33,6 +36,10 @@ int sceAppMgrAcquireBgmPortForMusicPlayer(void);
 
 extern SceUID main_thread_uid;
 extern SceUID event_flag_uid;
+
+#ifdef DEBUG
+extern SceAppMgrBudgetInfo budget_info;
+#endif // DEBUG
 
 static SceCtrlData pad, old_pad;
 static SceBool ime_module_loaded = SCE_FALSE;
@@ -51,20 +58,28 @@ void Utils_SetMin(int *set, int value, int min) {
 		*set = value;
 }
 
-int Utils_ReadControls(void) {
-	sceClibMemset(&pad, 0, sizeof(SceCtrlData));
-	sceCtrlPeekBufferPositive(0, &pad, 1);
+int Utils_ReadControls(SceSize argc, void* argv) {
 
-	pressed = pad.buttons & ~old_pad.buttons;
-	
-	old_pad = pad;
+	while (SCE_TRUE) {
+		sceKernelWaitEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_FG, SCE_KERNEL_EVF_WAITMODE_AND, NULL, NULL);
+
+		sceClibMemset(&pad, 0, sizeof(SceCtrlData));
+		sceCtrlPeekBufferPositive(0, &pad, 1);
+
+		pressed = pad.buttons & ~old_pad.buttons;
+
+		sceClibMemcpy(&old_pad, &pad, sizeof(SceCtrlData));
+
+		//for controls update need to check every frame at 60fps
+		sceDisplayWaitVblankStart();
+	}
 	return 0;
 }
 
 void Utils_Exit(void)
 {
 	sceNotificationUtilCleanHistory();
-	SceUID	modid = taiLoadStartKernelModule("ux0:app/ELEVENMPV/module/exit_module.skprx", 0, NULL, 0);
+	SceUID	modid = taiLoadStartKernelModule("ux0:app/ELEVENMPV/module/kernel/exit_module.skprx", 0, NULL, 0);
 	sceAppMgrQuitForNonSuspendableApp();
 	taiStopUnloadKernelModule(modid, 0, NULL, 0, NULL, NULL);
 }
@@ -99,8 +114,7 @@ void Utils_NotificationEventHandler(int a1) {
 	}
 }
 
-int Utils_AppStatusWatchdog(SceSize argc, void* argv)
-{
+int Utils_AppStatusWatchdog(SceSize argc, void* argv) {
 	int vol;
 	SceAppMgrEvent appEvent;
 	while (SCE_TRUE) {
@@ -134,7 +148,13 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 		//check volume
 
 		sceAppUtilSystemParamGetInt(9, &vol);
-		vitaAudioSetVolume(vol, vol);
+
+		if (config.eq_volume) {
+			if (config.eq_mode == 0)
+				vitaAudioSetVolume(vol, vol);
+			else
+				vitaAudioSetVolume(vol / 2, vol / 2);
+		}
 
 		//check notifications
 
@@ -146,7 +166,7 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 			else if (!sceKernelPollEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_END_NOTIFY, SCE_KERNEL_EVF_WAITMODE_AND, NULL)) {
 				SceNotificationUtilProgressFinishParam finish_param;
 				sceClibMemset(&finish_param, 0, sizeof(SceNotificationUtilProgressFinishParam));
-				Utils_Utf8ToUtf16((char *)finish_param.notificationText, "Playback has been stopped.");
+				Utils_Utf8ToUtf16(finish_param.notificationText, "Playback has been stopped.");
 				sceNotificationUtilProgressFinish(&finish_param);
 				sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_END_NOTIFY);
 			}
@@ -156,13 +176,46 @@ int Utils_AppStatusWatchdog(SceSize argc, void* argv)
 			}
 		}
 
-		sceKernelDelayThread(10 * 1000);
+#ifdef DEBUG
+		//malloc_stats();
+		sceAppMgrGetBudgetInfo(&budget_info);
+		/*sceClibPrintf("----- EMPA-A BUDGET -----");
+		sceClibPrintf("LPDDR2: %f MB\n", budget_info.freeLPDDR2 / 1024.0 / 1024.0);*/
+#endif
+
+		sceKernelDelayThread(100 * 1000);
 	}
 
 	return 0;
 }
 
 int Utils_InitAppUtil(void) {
+
+	/* sceCtrl rules */
+
+	SceCtrlRapidFireRule scroll_rule_up;
+	sceClibMemset(&scroll_rule_up, 0, sizeof(SceCtrlRapidFireRule));
+
+	scroll_rule_up.Mask = SCE_CTRL_UP;
+	scroll_rule_up.Trigger = SCE_CTRL_UP;
+	scroll_rule_up.Target = SCE_CTRL_UP;
+	scroll_rule_up.Delay = 20;
+	scroll_rule_up.Make = 2;
+	scroll_rule_up.Break = 2;
+
+	sceCtrlSetRapidFire(0, 0, &scroll_rule_up);
+
+	SceCtrlRapidFireRule scroll_rule_down;
+	sceClibMemset(&scroll_rule_down, 0, sizeof(SceCtrlRapidFireRule));
+
+	scroll_rule_down.Mask = SCE_CTRL_DOWN;
+	scroll_rule_down.Trigger = SCE_CTRL_DOWN;
+	scroll_rule_down.Target = SCE_CTRL_DOWN;
+	scroll_rule_down.Delay = 20;
+	scroll_rule_down.Make = 2;
+	scroll_rule_down.Break = 2;
+
+	sceCtrlSetRapidFire(0, 1, &scroll_rule_down);
 
 	sceSysmoduleLoadModule(SCE_SYSMODULE_NOTIFICATION_UTIL);
 
@@ -171,6 +224,9 @@ int Utils_InitAppUtil(void) {
 
 	SceUID status_watchdog = sceKernelCreateThread("app_status_watchdog", Utils_AppStatusWatchdog, 191, 0x1000, 0, 0, NULL);
 	sceKernelStartThread(status_watchdog, 0, NULL);
+
+	SceUID ctrl_watchdog = sceKernelCreateThread("controls_watchdog", Utils_ReadControls, 160, 0x1000, 0, 0, NULL);
+	sceKernelStartThread(ctrl_watchdog, 0, NULL);
 
 	SceAppUtilInitParam init;
 	SceAppUtilBootParam boot;
@@ -181,7 +237,7 @@ int Utils_InitAppUtil(void) {
 	
 	if (R_FAILED(ret = sceAppUtilInit(&init, &boot)))
 		return ret;
-	
+
 	if (R_FAILED(ret = sceAppUtilMusicMount()))
 		return ret;
 	
@@ -280,14 +336,29 @@ void Utils_UnloadIme(void) {
 	ime_module_loaded = SCE_FALSE;
 }
 
-void Utils_Utf8ToUtf16(char* str1, const char* str2)
-{
-	while (*str2)
-	{
-		*str1 = *str2;
-		str1++;
-		*str1 = '\0';
-		str1++;
-		str2++;
+void Utils_Utf8ToUtf16(SceWChar16* dst, char* src) {
+	for (int i = 0; src[i];) {
+		if ((src[i] & 0xE0) == 0xE0) {
+			*(dst++) = ((src[i] & 0x0F) << 12) | ((src[i + 1] & 0x3F) << 6) | (src[i + 2] & 0x3F);
+			i += 3;
+		}
+		else if ((src[i] & 0xC0) == 0xC0) {
+			*(dst++) = ((src[i] & 0x1F) << 6) | (src[i + 1] & 0x3F);
+			i += 2;
+		}
+		else {
+			*(dst++) = src[i];
+			i += 1;
+		}
 	}
+
+	*dst = '\0';
+}
+
+void Utils_WriteSafeMem(void* data, SceSize buf_size,  SceOff offset) {
+	sceAppUtilSaveSafeMemory(data, buf_size, offset);
+}
+
+void Utils_ReadSafeMem(void* buf, SceSize buf_size, SceOff offset) {
+	sceAppUtilLoadSafeMemory(buf, buf_size, offset);
 }

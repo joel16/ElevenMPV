@@ -16,42 +16,55 @@
 #include "touch.h"
 #include "utils.h"
 
-#define CLIB_HEAP_SIZE 1 * 1024 * 1024
-int _newlib_heap_size_user = 3 * 1024 * 1024;
+#define CLIB_HEAP_SIZE 1 * 1024 * 1024			// |sceClibMspace| Used for libvita2d_sys
+//#define LIBC_HEAP_SIZE 1 * 1024 * 1024		// |sceLibc|       Used for general memory stuff (file browser, small temp allocation etc.), this value is embedded in the module
+int _newlib_heap_size_user = 1 * 1024 * 1024;	// |newlib|        Used for decoders
 
-void* mspace;
 SceUID main_thread_uid;
 SceUID event_flag_uid;
 
+#ifdef DEBUG
+SceAppMgrBudgetInfo budget_info;
+#endif
+
 int main(int argc, char *argv[]) {
 
-	void* clibm_base;
-	SceUID clib_heap = sceKernelAllocMemBlock("ClibHeap", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW_UNCACHE, CLIB_HEAP_SIZE, NULL);
+#ifdef DEBUG
+	sceClibMemset(&budget_info, 0, sizeof(SceAppMgrBudgetInfo));
+	budget_info.size = 0x88;
+	sceAppMgrGetBudgetInfo(&budget_info);
+	sceClibPrintf("----- EMPA-A INITIAL BUDGET -----");
+	sceClibPrintf("LPDDR2: %d MB\n", budget_info.freeLPDDR2 / 1024 / 1024);
+#endif
+
+	void* clibm_base, *mspace;
+	SceUID clib_heap = sceKernelAllocMemBlock("ClibHeap", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, CLIB_HEAP_SIZE, NULL);
 	sceKernelGetMemBlockBase(clib_heap, &clibm_base);
 	mspace = sceClibMspaceCreate(clibm_base, CLIB_HEAP_SIZE);
 
 	main_thread_uid = sceKernelGetThreadId();
 	sceKernelChangeThreadPriority(main_thread_uid, 160);
-	event_flag_uid = sceKernelCreateEventFlag("ElevenMPVA_thrread_event_flag", SCE_KERNEL_ATTR_MULTI, FLAG_ELEVENMPVA_IS_FG, NULL);
 
-	sceKernelLoadStartModule("vs0:sys/external/libc.suprx", 0, NULL, 0, NULL, NULL);
+	event_flag_uid = sceKernelCreateEventFlag("ElevenMPVA_thread_event_flag", SCE_KERNEL_ATTR_MULTI, FLAG_ELEVENMPVA_IS_FG | FLAG_ELEVENMPVA_IS_DECODER_USED, NULL);
 
 	vita2d_clib_pass_mspace(mspace);
-	vita2d_init();
+	vita2d_init_with_msaa_and_memsize(0, 4 * 1024, 128 * 1024, 64 * 1024, 4 * 1024, 0);
 	vita2d_set_vblank_wait(0);
 
-	vita2d_system_pvf_config configs[] = {
-		{SCE_PVF_LANGUAGE_LATIN, SCE_PVF_FAMILY_SANSERIF, SCE_PVF_STYLE_REGULAR, NULL},
-	};
-
-	font = vita2d_load_system_pvf(1, configs, 13, 13);
+	vita2d_system_pvf_config config;
+	sceClibMemset(&config, 0, sizeof(vita2d_system_pvf_config));
+	config.language = SCE_PVF_LANGUAGE_CJK;
+	config.family = SCE_PVF_FAMILY_SANSERIF;
+	config.style = SCE_PVF_STYLE_REGULAR;
+	font = vita2d_load_system_pvf(1, &config, 13, 13);
 
 	Textures_Load();
+
+	Utils_InitAppUtil();
 
 	Config_Load();
 	Config_GetLastDirectory();
 
-	Utils_InitAppUtil();
 	SCE_CTRL_ENTER = Utils_GetEnterButton();
 	SCE_CTRL_CANCEL = Utils_GetCancelButton();
 

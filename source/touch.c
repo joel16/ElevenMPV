@@ -1,5 +1,6 @@
 #include <psp2/touch.h>
 #include <psp2/kernel/clib.h>
+#include <psp2/libc.h>
 #include <psp2/sysmodule.h>
 #include <psp2/systemgesture.h>
 
@@ -8,10 +9,6 @@
 static SceSystemGestureTouchRecognizer *touch_recognizers;
 static int filelist_drag_accumulator = 0;
 
-extern void* mspace;
-
-void* sceClibMspaceCalloc(void* space, size_t num, size_t size);
-
 int Touch_Init(void) {
 	SceTouchPanelInfo front_panel_info;
 	sceTouchGetPanelInfo(SCE_TOUCH_PORT_FRONT, &front_panel_info);
@@ -19,7 +16,7 @@ int Touch_Init(void) {
 	sceSysmoduleLoadModule(SCE_SYSMODULE_SYSTEM_GESTURE);
 	sceSystemGestureInitializePrimitiveTouchRecognizer(NULL);
 
-	touch_recognizers = (SceSystemGestureTouchRecognizer *)sceClibMspaceCalloc(mspace, TOUCH_RECOGNIZERS_NUM, sizeof(SceSystemGestureTouchRecognizer));
+	touch_recognizers = (SceSystemGestureTouchRecognizer *)sceLibcCalloc(TOUCH_RECOGNIZERS_NUM, sizeof(SceSystemGestureTouchRecognizer));
 	SceSystemGestureRectangle rect;
 	rect.x = BTN_PLAY_X * 2;
 	rect.y = BTN_MAIN_Y * 2;
@@ -27,12 +24,12 @@ int Touch_Init(void) {
 	rect.height = BUTTON_HEIGHT * 2;
 	sceSystemGestureCreateTouchRecognizer(&touch_recognizers[TOUCHREC_TAP_PLAY], SCE_SYSTEM_GESTURE_TYPE_TAP, SCE_TOUCH_PORT_FRONT, &rect, NULL);
 	rect.x = 20;
-	rect.y = 114;
+	rect.y = BTN_SETTINGS_Y * 2;
 	rect.width = 100;
 	rect.height = 100;
 	sceSystemGestureCreateTouchRecognizer(&touch_recognizers[TOUCHREC_TAP_BACK], SCE_SYSTEM_GESTURE_TYPE_TAP, SCE_TOUCH_PORT_FRONT, &rect, NULL);
 	rect.x = (BTN_SETTINGS_X - 25) * 2;
-	rect.y = 114;
+	rect.y = BTN_SETTINGS_Y * 2;
 	rect.width = 100;
 	rect.height = 100;
 	sceSystemGestureCreateTouchRecognizer(&touch_recognizers[TOUCHREC_TAP_SETTINGS], SCE_SYSTEM_GESTURE_TYPE_TAP, SCE_TOUCH_PORT_FRONT, &rect, NULL);
