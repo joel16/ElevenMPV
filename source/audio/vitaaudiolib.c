@@ -60,7 +60,6 @@ static int vitaAudioChannelThread(unsigned int args, void *argp) {
 				sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
 			}
 
-			sceAudioOutSetVolume(vitaAudioStatus.handle, SCE_AUDIO_VOLUME_FLAG_L_CH | SCE_AUDIO_VOLUME_FLAG_R_CH, vol);
 			sceAudioOutOutput(vitaAudioStatus.handle, bufptr);
 		}
 		bufidx = (bufidx ? 0 : 1);
