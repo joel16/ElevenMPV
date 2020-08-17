@@ -1,7 +1,5 @@
 #include <psp2/kernel/clib.h>
-#include <psp2/io/dirent.h>
-#include <psp2/io/fcntl.h>
-#include <psp2/io/stat.h>
+#include <psp2/kernel/iofilemgr.h>
 #include <psp2/libc.h>
 #include <psp2/gxm.h>
 
@@ -38,9 +36,9 @@ static int cmpstringp(const void *p1, const void *p2) {
 	SceIoDirent *entryA = (SceIoDirent *)p1;
 	SceIoDirent *entryB = (SceIoDirent *)p2;
 
-	if ((SCE_S_ISDIR(entryA->d_stat.st_mode)) && !(SCE_S_ISDIR(entryB->d_stat.st_mode)))
+	if ((SCE_STM_ISDIR(entryA->d_stat.st_mode)) && !(SCE_STM_ISDIR(entryB->d_stat.st_mode)))
 		return -1;
-	else if (!(SCE_S_ISDIR(entryA->d_stat.st_mode)) && (SCE_S_ISDIR(entryB->d_stat.st_mode)))
+	else if (!(SCE_STM_ISDIR(entryA->d_stat.st_mode)) && (SCE_STM_ISDIR(entryB->d_stat.st_mode)))
 		return 1;
 	else {
 		if (config.sort == 0) // Sort alphabetically (ascending - A to Z)
@@ -90,7 +88,7 @@ int Dirbrowse_PopulateFiles(SceBool refresh) {
 				if ((i == -1) && (!(sceClibStrcmp(cwd, root_path))))
 					continue;
 
-				item->is_dir = SCE_S_ISDIR(entries[i].d_stat.st_mode);
+				item->is_dir = SCE_STM_ISDIR(entries[i].d_stat.st_mode);
 				// Copy File Name
 				sceLibcStrcpy(item->name, entries[i].d_name);
 				sceLibcStrcpy(item->ext, FS_GetFileExt(item->name));

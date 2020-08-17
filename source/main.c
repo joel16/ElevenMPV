@@ -1,9 +1,9 @@
 #include <psp2/appmgr.h>
-#include <psp2/io/stat.h>
+#include <psp2/kernel/iofilemgr.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/kernel/modulemgr.h> 
 #include <psp2/kernel/clib.h>
-#include <psp2/shellutil.h>
+#include <psp2/shellsvc.h>
 #include <psp2/sysmodule.h>
 #include <psp2/pvf.h>
 

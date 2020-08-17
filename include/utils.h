@@ -3,6 +3,7 @@
 
 #include <psp2/ime.h>
 #include <psp2/notificationutil.h>
+#include <psp2/kernel/iofilemgr.h>
 
 #define JPEGDEC_SIZE_LIMIT 262144 //500x500
 

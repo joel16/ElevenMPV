@@ -1,4 +1,5 @@
 #include <psp2/kernel/clib.h>
+#include <psp2/appmgr.h>
 #include <shellaudio.h>
 
 #include "audio.h"

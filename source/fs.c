@@ -1,7 +1,5 @@
 #include <psp2/kernel/clib.h>
-#include <psp2/io/dirent.h>
-#include <psp2/io/fcntl.h>
-#include <psp2/io/stat.h>
+#include <psp2/kernel/iofilemgr.h>
 
 #include "common.h"
 #include "fs.h"

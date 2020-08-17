@@ -1,13 +1,13 @@
 #include <psp2/audioout.h>
 #include <psp2/appmgr.h>
-#include <psp2/io/dirent.h>
+#include <psp2/kernel/iofilemgr.h>
 #include <psp2/kernel/clib.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/kernel/processmgr.h> 
 #include <psp2/kernel/rng.h>
 #include <psp2/notificationutil.h>
 #include <psp2/power.h>
-#include <psp2/shellutil.h>
+#include <psp2/shellsvc.h>
 #include <psp2/vshbridge.h>
 #include <psp2/libc.h>
 #include <shellaudio.h>
@@ -22,6 +22,7 @@
 #include "textures.h"
 #include "utils.h"
 #include "dirbrowse.h"
+#include "vitaaudiolib.h"
 
 #define METADATA1_X 80
 #define METADATA2_X 425

@@ -1,12 +1,12 @@
 #include <psp2/apputil.h>
-#include <psp2/io/dirent.h>
+#include <psp2/kernel/iofilemgr.h>
 #include <psp2/system_param.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/kernel/processmgr.h>
 #include <psp2/notificationutil.h>
 #include <psp2/kernel/clib.h>
 #include <psp2/sysmodule.h> 
-#include <psp2/shellutil.h>
+#include <psp2/shellsvc.h>
 #include <psp2/display.h>
 #include <psp2/power.h> 
 #include <psp2/ime.h> 
@@ -115,7 +115,6 @@ void Utils_NotificationEventHandler(int a1) {
 }
 
 int Utils_AppStatusWatchdog(SceSize argc, void* argv) {
-	int vol;
 	SceAppMgrEvent appEvent;
 	while (SCE_TRUE) {
 
@@ -261,9 +260,9 @@ int Utils_Alphasort(const void *p1, const void *p2) {
 	SceIoDirent *entryA = (SceIoDirent *) p1;
 	SceIoDirent *entryB = (SceIoDirent *) p2;
 	
-	if ((SCE_S_ISDIR(entryA->d_stat.st_mode)) && !(SCE_S_ISDIR(entryB->d_stat.st_mode)))
+	if ((SCE_STM_ISDIR(entryA->d_stat.st_mode)) && !(SCE_STM_ISDIR(entryB->d_stat.st_mode)))
 		return -1;
-	else if (!(SCE_S_ISDIR(entryA->d_stat.st_mode)) && (SCE_S_ISDIR(entryB->d_stat.st_mode)))
+	else if (!(SCE_STM_ISDIR(entryA->d_stat.st_mode)) && (SCE_STM_ISDIR(entryB->d_stat.st_mode)))
 		return 1;
 		
 	return sceLibcStrcasecmp(entryA->d_name, entryB->d_name);
