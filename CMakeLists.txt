@@ -23,8 +23,8 @@ dolce_gen_libs(SceShellSvc_stubs
   SceShellSvc.yml
   LIB SceShellSvc_stub_weak)
 set(VITA_APP_NAME "Eleven Music Player")
-set(VITA_TITLEID  "ELEVENMPV")
-set(VITA_VERSION  "03.70")
+set(VITA_TITLEID  "GRVA00008")
+set(VITA_VERSION  "03.80")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Os -Wl,--no-wchar-size-warning,--no-enum-size-warning -Wall")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -98,9 +98,12 @@ target_link_libraries(${PROJECT_NAME}
   SceNotificationUtil_stub
   SceJpegArm_stub
   ScePvf_stub
+  SceDbg_stub
+  SceFios2_stub
+  SceKernelDmacMgr_stub
 )
 
-set(DOLCE_MKSFOEX_FLAGS "${DOLCE_MKSFOEX_FLAGS} -d ATTRIBUTE=17338760 -s CATEGORY=gdc -d PARENTAL_LEVEL=1")
+set(DOLCE_MKSFOEX_FLAGS "${DOLCE_MKSFOEX_FLAGS} -d ATTRIBUTE=17338760 -s CATEGORY=gdc")
 set(DOLCE_ELF_CREATE_FLAGS "${DOLCE_ELF_CREATE_FLAGS} -h 544288")
 
 dolce_create_self(eboot.bin ${PROJECT_NAME} UNSAFE BOOT_PARAM ${CMAKE_CURRENT_BINARY_DIR}/boot_param.bin)
@@ -122,6 +125,7 @@ dolce_create_self(exit_module.skprx exit_module CONFIG module/exit_module.yml UN
 dolce_create_vpk(${PROJECT_NAME}.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
+  CONTENT_ID_LABEL "ELEVENMPVA000000"
   FILE sce_sys/icon0.png sce_sys/icon0.png
   FILE sce_sys/pic0.png sce_sys/pic0.png
   FILE sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
