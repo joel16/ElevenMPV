@@ -79,7 +79,7 @@ int Utils_ReadControls(SceSize argc, void* argv) {
 void Utils_Exit(void)
 {
 	sceNotificationUtilCleanHistory();
-	SceUID	modid = taiLoadStartKernelModule("ux0:app/ELEVENMPV/module/kernel/exit_module.skprx", 0, NULL, 0);
+	SceUID	modid = taiLoadStartKernelModule("ux0:app/GRVA00008/module/kernel/exit_module.skprx", 0, NULL, 0);
 	sceAppMgrQuitForNonSuspendableApp();
 	taiStopUnloadKernelModule(modid, 0, NULL, 0, NULL, NULL);
 }
