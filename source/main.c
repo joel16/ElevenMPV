@@ -15,10 +15,8 @@
 #include "textures.h"
 #include "touch.h"
 #include "utils.h"
-
-#define CLIB_HEAP_SIZE 1 * 1024 * 1024			// |sceClibMspace| Used for libvita2d_sys
-//#define LIBC_HEAP_SIZE 1 * 1024 * 1024		// |sceLibc|       Used for general memory stuff (file browser, small temp allocation etc.), this value is embedded in the module
-int _newlib_heap_size_user = 1 * 1024 * 1024;	// |newlib|        Used for decoders
+#include "psp2_compat.h"
+#include "fios2_common.h"
 
 SceUID main_thread_uid;
 SceUID event_flag_uid;
@@ -27,7 +25,7 @@ SceUID event_flag_uid;
 SceAppMgrBudgetInfo budget_info;
 #endif
 
-int main(int argc, char *argv[]) {
+void _start(int argc, char *argv[]) {
 
 #ifdef DEBUG
 	sceClibMemset(&budget_info, 0, sizeof(SceAppMgrBudgetInfo));
@@ -37,17 +35,16 @@ int main(int argc, char *argv[]) {
 	sceClibPrintf("LPDDR2: %d MB\n", budget_info.freeLPDDR2 / 1024 / 1024);
 #endif
 
-	void* clibm_base, *mspace;
-	SceUID clib_heap = sceKernelAllocMemBlock("ClibHeap", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, CLIB_HEAP_SIZE, NULL);
-	sceKernelGetMemBlockBase(clib_heap, &clibm_base);
-	mspace = sceClibMspaceCreate(clibm_base, CLIB_HEAP_SIZE);
+	psp2CompatInit();
+	//fios2Init();
 
 	main_thread_uid = sceKernelGetThreadId();
 	sceKernelChangeThreadPriority(main_thread_uid, 160);
 
+	sceSysmoduleLoadModuleInternal(SCE_SYSMODULE_INTERNAL_AUDIOCODEC);
+
 	event_flag_uid = sceKernelCreateEventFlag("ElevenMPVA_thread_event_flag", SCE_KERNEL_ATTR_MULTI, FLAG_ELEVENMPVA_IS_FG | FLAG_ELEVENMPVA_IS_DECODER_USED, NULL);
 
-	vita2d_clib_pass_mspace(mspace);
 	vita2d_init_with_msaa_and_memsize(0, 4 * 1024, 128 * 1024, 64 * 1024, 4 * 1024, 0);
 	vita2d_set_vblank_wait(0);
 
@@ -74,6 +71,4 @@ int main(int argc, char *argv[]) {
 	Utils_InitPowerTick();
 
 	Menu_DisplayFiles();
-
-	return 0;
 }

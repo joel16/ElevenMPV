@@ -242,7 +242,7 @@ typedef drflac_uint32    drflac_bool32;
 #define DRFLAC_FALSE     0
 
 #define DRFLAC_DEPRECATED
-#define DR_FLAC_NO_STDIO
+//#define DR_FLAC_NO_STDIO
 
 int module_stop(SceSize argc, const void *args) {
 	sceClibPrintf("ShellAudio module stop\n");

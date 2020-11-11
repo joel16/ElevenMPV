@@ -5,6 +5,8 @@
 #include <psp2/notificationutil.h>
 #include <psp2/kernel/iofilemgr.h>
 
+#define ALIGN(x, a)	(((x) + ((a) - 1)) & ~((a) - 1))
+
 #define JPEGDEC_SIZE_LIMIT 262144 //500x500
 
 #define SCE_KERNEL_ATTR_MULTI (0x00001000U)

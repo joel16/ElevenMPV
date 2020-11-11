@@ -11,9 +11,9 @@
 #include <psp2/power.h> 
 #include <psp2/ime.h> 
 #include <psp2/appmgr.h> 
-#include <psp2/libc.h>
 #include <shellaudio.h> 
 #include <taihen.h>
+#include <string.h>
 
 #include "utils.h"
 #include "config.h"
@@ -265,7 +265,7 @@ int Utils_Alphasort(const void *p1, const void *p2) {
 	else if (!(SCE_STM_ISDIR(entryA->d_stat.st_mode)) && (SCE_STM_ISDIR(entryB->d_stat.st_mode)))
 		return 1;
 		
-	return sceLibcStrcasecmp(entryA->d_name, entryB->d_name);
+	return strcasecmp(entryA->d_name, entryB->d_name);
 }
 
 char *Utils_Basename(const char *filename) {

@@ -1,6 +1,8 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/kernel/iofilemgr.h>
-#include <psp2/libc.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 #include "common.h"
 #include "config.h"
@@ -29,16 +31,16 @@ const char *config_file =
 int Config_Save(config_t config) {
 	int ret = 0;
 	
-	char *buf = sceLibcMalloc(190);
+	char *buf = malloc(190);
 	int len = sceClibSnprintf(buf, 190, config_file, CONFIG_VERSION, config.sort, config.alc_mode, config.eq_mode, config.eq_volume,
 		config.motion_mode, config.motion_timer, config.motion_degree, config.power_saving, config.power_timer, config.notify_mode, config.device);
 	
 	if (R_FAILED(ret = FS_WriteFile("savedata0:config.cfg", buf, len))) {
-		sceLibcFree(buf);
+		free(buf);
 		return ret;
 	}
 	
-	sceLibcFree(buf);
+	free(buf);
 	return 0;
 }	
 	
@@ -63,18 +65,18 @@ int Config_Load(void) {
 
 	SceOff size = 0;
 	FS_GetFileSize("savedata0:config.cfg", &size);
-	char *buf = sceLibcMalloc(size + 1);
+	char *buf = malloc(size + 1);
 
 	if (R_FAILED(ret = FS_ReadFile("savedata0:config.cfg", buf, size))) {
-		sceLibcFree(buf);
+		free(buf);
 		return ret;
 	}
 
 	buf[size] = '\0';
-	sceLibcSscanf(buf, config_file, &config_version_holder, &config.sort, &config.alc_mode, &config.eq_mode,
+	sscanf(buf, config_file, &config_version_holder, &config.sort, &config.alc_mode, &config.eq_mode,
 		&config.eq_volume, &config.motion_mode, &config.motion_timer, &config.motion_degree, &config.power_saving,
 		&config.power_timer, &config.notify_mode, &config.device);
-	sceLibcFree(buf);
+	free(buf);
 
 	// Delete config file if config file is updated. This will rarely happen.
 	if (config_version_holder  < CONFIG_VERSION) {
@@ -113,25 +115,25 @@ int Config_GetLastDirectory(void) {
 		ret = sceClibSnprintf(root_path, 8, "ux0:/");
 		Utils_WriteSafeMem((void*)&ret, 4, 0);
 		Utils_WriteSafeMem((void*)root_path, ret, 4);
-		sceLibcStrcpy(cwd, root_path); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
+		strcpy(cwd, root_path); // Set Start Path to "sdmc:/" if lastDir.txt hasn't been created.
 	}
 	else {
-		sceLibcStrcpy(root_path, root_paths[config.device]);
+		strcpy(root_path, root_paths[config.device]);
 
-		char *buf = sceLibcMalloc(exist + 1);
+		char *buf = malloc(exist + 1);
 
 		Utils_ReadSafeMem((void *)buf, exist, 4);
 
 		buf[exist] = '\0';
 		char path[512];
-		sceLibcSscanf(buf, "%[^\n]s", path);
+		sscanf(buf, "%[^\n]s", path);
 	
 		if (FS_DirExists(path)) // Incase a directory previously visited had been deleted, set start path to sdmc:/ to avoid errors.
-			sceLibcStrcpy(cwd, path);
+			strcpy(cwd, path);
 		else
-			sceLibcStrcpy(cwd, root_path);
+			strcpy(cwd, root_path);
 		
-		sceLibcFree(buf);
+		free(buf);
 	}
 	
 	return 0;

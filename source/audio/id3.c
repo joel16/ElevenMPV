@@ -1,5 +1,4 @@
 #include <psp2/kernel/iofilemgr.h>
-#include <psp2/libc.h>
 #include <psp2/kernel/clib.h>
 #include <string.h>
 #include <stdlib.h>
@@ -39,7 +38,7 @@ int searchJPGstart(int fp, int delta){
     int retValue = -1;
     int i = 0;
 
-    unsigned char *tBuffer = sceLibcMalloc(sizeof(unsigned char) * (delta + 2));
+    unsigned char *tBuffer = malloc(sizeof(unsigned char) * (delta + 2));
     if (tBuffer == NULL)
         return -1;
 
@@ -54,7 +53,7 @@ int searchJPGstart(int fp, int delta){
             break;
         }
     }
-    sceLibcFree(tBuffer);
+    free(tBuffer);
     return retValue;
 }
 
@@ -64,7 +63,7 @@ int searchPNGstart(int fp, int delta){
     int retValue = -1;
     int i = 0;
 
-    unsigned char *tBuffer = sceLibcMalloc(sizeof(unsigned char) * (delta + 15));
+    unsigned char *tBuffer = malloc(sizeof(unsigned char) * (delta + 15));
     if (tBuffer == NULL)
         return -1;
 
@@ -79,7 +78,7 @@ int searchPNGstart(int fp, int delta){
             break;
         }
     }
-	sceLibcFree(tBuffer);
+	free(tBuffer);
     return retValue;
 }
 
@@ -201,7 +200,7 @@ int ID3v2TagSize(const char *mp3path)
    if (fp < 0) return 0;
 
    sceIoRead(fp, sig, sizeof(sig));
-   if (sceClibStrncmp("ID3",sig,3) != 0) {
+   if (sceClibStrncmp("ID3",sig,3) != 0 && sceClibStrncmp("ea3", sig, 3) != 0) { //ATRAC3 compat
       sceIoClose(fp);
       return 0;
    }
@@ -230,7 +229,7 @@ int ID3v2(const char *mp3path)
    if (fp < 0) return 0;
 
    sceIoRead(fp, sig, sizeof(sig));
-   if (!sceClibStrncmp("ID3",sig,3)) {
+   if (!sceClibStrncmp("ID3",sig,3) || !sceClibStrncmp("ea3", sig, 3)) { //ATRAC3 compat
           sceIoRead(fp, &version, sizeof(unsigned short int));
       version = (unsigned short int) swapInt16BigToHost((short int)version);
       version /= 256;

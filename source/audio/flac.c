@@ -1,6 +1,6 @@
 #include <psp2/kernel/clib.h>
-#include <psp2/kernel/iofilemgr.h> 
-#include <psp2/libc.h>
+#include <psp2/kernel/iofilemgr.h>
+#include <psp2/fios2.h>
 
 #include "audio.h"
 #include "config.h"
@@ -10,7 +10,6 @@
 
 static drflac *flac;
 static drflac_uint64 frames_read = 0;
-static SceUID flac_fd = 0;
 
 void metadata_cb(void* pUserData, drflac_metadata* pMetadata) {
 
@@ -70,22 +69,10 @@ void metadata_cb(void* pUserData, drflac_metadata* pMetadata) {
 	}
 }
 
-size_t dr_flac_read(void* pUserData, void* pBufferOut, size_t bytesToRead) {
-	return sceIoRead(flac_fd, pBufferOut, bytesToRead);
-}
-
-drflac_bool32 dr_flac_seek(void* pUserData, int offset, drflac_seek_origin origin) {
-	if (sceIoLseek32(flac_fd, offset, origin) < 0)
-		return DRFLAC_FALSE;
-	else
-		return DRFLAC_TRUE;
-}
-
 int FLAC_Init(const char *path) {
 
-	flac_fd = sceIoOpen(path, SCE_O_RDONLY, 0777);
-
-	flac = drflac_open_with_metadata(dr_flac_read, dr_flac_seek, metadata_cb, NULL, NULL);
+	//SceLibc is the fastest sync IO available on Vita, so we just use stdio here
+	flac = drflac_open_file_with_metadata(path, metadata_cb, NULL, NULL);
 	if (flac == NULL)
 		return -1;
 
@@ -132,6 +119,5 @@ void FLAC_Term(void) {
 	if (metadata.has_meta)
 		metadata.has_meta = SCE_FALSE;
 
-	sceIoClose(flac_fd);
 	drflac_close(flac);
 }

@@ -9,8 +9,9 @@
 #include <psp2/power.h>
 #include <psp2/shellsvc.h>
 #include <psp2/vshbridge.h>
-#include <psp2/libc.h>
 #include <shellaudio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "audio.h"
 #include "common.h"
@@ -67,13 +68,13 @@ static int Menu_GetMusicList(void) {
 	if (R_SUCCEEDED(dir = sceIoDopen(cwd))) {
 
 		int entryCount = 0, i = 0;
-		SceIoDirent *entries = (SceIoDirent *)sceLibcCalloc(MAX_FILES, sizeof(SceIoDirent));
+		SceIoDirent *entries = (SceIoDirent *)calloc(MAX_FILES, sizeof(SceIoDirent));
 
 		while (sceIoDread(dir, &entries[entryCount]) > 0)
 			entryCount++;
 
 		sceIoDclose(dir);
-		sceLibcQsort(entries, entryCount, sizeof(SceIoDirent), Utils_Alphasort);
+		qsort(entries, entryCount, sizeof(SceIoDirent), Utils_Alphasort);
 
 		for (i = 0; i < entryCount; i++) {
 			if ((!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "flac", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "it", 4)) ||
@@ -81,9 +82,11 @@ static int Menu_GetMusicList(void) {
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "ogg", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "opus", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "s3m", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "wav", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "at9", 4)) ||
-				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "m4a", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "aac", 4))) {
-				sceLibcStrcpy(playlist[count], cwd);
-				sceLibcStrcpy(playlist[count] + sceLibcStrlen(playlist[count]), entries[i].d_name);
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "m4a", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "aac", 4)) ||
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "oma", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "aa3", 4)) ||
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "at3", 4))) {
+				strcpy(playlist[count], cwd);
+				strcpy(playlist[count] + strlen(playlist[count]), entries[i].d_name);
 				count++;
 			}
 
@@ -99,7 +102,7 @@ static int Menu_GetMusicList(void) {
 			}
 		}
 
-		sceLibcFree(entries);
+		free(entries);
 	}
 	else {
 		sceIoDclose(dir);
@@ -246,10 +249,10 @@ static void Menu_InitMusic(char *path) {
 	else
 		shellAudioSetEQModeForMusicPlayer(config.eq_mode);
 
-	filename = sceLibcMalloc(128);
+	filename = malloc(128);
 	sceClibSnprintf(filename, 128, Utils_Basename(path));
-	position_time = sceLibcMalloc(35);
-	length_time = sceLibcMalloc(35);
+	position_time = malloc(35);
+	length_time = malloc(35);
 	length_time_width = 0;
 
 	length = Audio_GetLengthSeconds();
@@ -302,9 +305,9 @@ static void Music_HandleNext(SceBool forward, int state) {
 
 	Audio_Stop();
 
-	sceLibcFree(filename);
-	sceLibcFree(length_time);
-	sceLibcFree(position_time);
+	free(filename);
+	free(length_time);
+	free(position_time);
 
 	if ((metadata.has_meta) && (metadata.cover_image) && !ext_cover_loaded) {
 		vita2d_wait_rendering_done();
@@ -639,9 +642,9 @@ void Menu_PlayAudio(char *path) {
 		Utils_NotificationEnd();
 	}
 
-	sceLibcFree(filename);
-	sceLibcFree(length_time);
-	sceLibcFree(position_time);
+	free(filename);
+	free(length_time);
+	free(position_time);
 
 	Menu_UnloadExternalCover();
 	ext_cover_is_jpeg = SCE_FALSE;

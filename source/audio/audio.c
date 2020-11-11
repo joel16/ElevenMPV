@@ -16,6 +16,7 @@
 #include "xm.h"
 #include "at9.h"
 #include "aac.h"
+#include "at3.h"
 
 enum Audio_FileType {
 	FILE_TYPE_NONE,
@@ -26,7 +27,8 @@ enum Audio_FileType {
 	FILE_TYPE_WAV,
 	FILE_TYPE_XM,
 	FILE_TYPE_ATRAC9,
-	FILE_TYPE_AAC
+	FILE_TYPE_AAC,
+	FILE_TYPE_AT3
 };
 
 typedef struct {
@@ -84,6 +86,8 @@ int Audio_Init(const char *path) {
 		file_type = FILE_TYPE_ATRAC9;
 	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "m4a", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aac", 3)))
 		file_type = FILE_TYPE_AAC;
+	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "oma", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aa3", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "at3", 3)))
+		file_type = FILE_TYPE_AT3;
 
 	switch(file_type) {
 		case FILE_TYPE_FLAC:
@@ -180,6 +184,18 @@ int Audio_Init(const char *path) {
 			decoder.seek = AAC_Seek;
 			decoder.term = AAC_Term;
 			sceKernelClearEventFlag(event_flag_uid, ~FLAG_ELEVENMPVA_IS_DECODER_USED);
+			break;
+
+		case FILE_TYPE_AT3:
+			decoder.init = AT3_Init;
+			decoder.rate = AT3_GetSampleRate;
+			decoder.channels = AT3_GetChannels;
+			decoder.decode = AT3_Decode;
+			decoder.position = AT3_GetPosition;
+			decoder.length = AT3_GetLength;
+			decoder.seek = AT3_Seek;
+			decoder.term = AT3_Term;
+			sceKernelSetEventFlag(event_flag_uid, FLAG_ELEVENMPVA_IS_DECODER_USED);
 			break;
 
 		default:

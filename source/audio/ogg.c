@@ -8,28 +8,29 @@
 #include "touch.h"
 
 static OggVorbis_File ogg;
-static SceUID ogg_file = 0;
+static FILE* ogg_file;
 static vorbis_info *ogg_info = NULL;
 static ogg_int64_t samples_read = 0, max_lenth = 0;
 
 static size_t ogg_callback_read(void *ptr, size_t size, size_t count, void *stream) {
-	return sceIoRead(*(SceUID *)stream, ptr, size * count);
+	return fread(ptr, size, count, *(FILE **)stream);
 }
 
 static int ogg_callback_seek(void *stream, ogg_int64_t offset, int whence) {
-	return sceIoLseek32(*(SceUID *)stream, (unsigned int) offset, whence);
+	return fseek(*(FILE **)stream, (long) offset, whence);
 }
 
 static int ogg_callback_close(void *stream) {
-	return sceIoClose(*(SceUID *)stream);
+	return fclose(*(FILE **)stream);
 }
 
 static long ogg_callback_tell(void *stream) {
-	return sceIoLseek32(*(SceUID *)stream, 0, SCE_SEEK_CUR);
+	return ftell(*(FILE **)stream);
 }
 
 int OGG_Init(const char *path) {
-	if (R_FAILED(ogg_file = sceIoOpen(path, SCE_O_RDONLY, 0777)))
+	ogg_file = fopen(path, "r");
+	if (ogg_file == NULL)
 		return -1;
 
 	ov_callbacks ogg_callbacks;
@@ -39,7 +40,7 @@ int OGG_Init(const char *path) {
 	ogg_callbacks.tell_func = ogg_callback_tell;
 
 	if (R_FAILED(ov_open_callbacks(&ogg_file, &ogg, NULL, 0, ogg_callbacks))) {
-		sceIoClose(ogg_file);
+		fclose(ogg_file);
 		return -1;
 	}
 
@@ -141,5 +142,5 @@ void OGG_Term(void) {
         metadata.has_meta = SCE_FALSE;
 
 	ov_clear(&ogg);
-	sceIoClose(ogg_file);
+	fclose(ogg_file);
 }

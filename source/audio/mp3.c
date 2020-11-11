@@ -1,8 +1,8 @@
 #include <psp2/kernel/clib.h>
-#include <psp2/libc.h>
 #include <psp2/appmgr.h>
 #include <psp2/kernel/iofilemgr.h>
 #include <shellaudio.h>
+#include <stdlib.h>
 
 #include "audio.h"
 #include "config.h"
@@ -36,7 +36,7 @@ int MP3_Init(char *path) {
 	if (error < 0)
 		return error;
 
-	ID3Tag *ID3 = sceLibcMalloc(sizeof(ID3Tag));
+	ID3Tag *ID3 = malloc(sizeof(ID3Tag));
 	ParseID3(path, ID3);
 
 	char* meta_ptr = (char *)ID3;
@@ -64,7 +64,7 @@ int MP3_Init(char *path) {
 		Menu_UnloadExternalCover();
 		SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
 		if (fd >= 0) {
-			char *buffer = sceLibcMalloc(ID3->ID3EncapsulatedPictureLength);
+			char *buffer = malloc(ID3->ID3EncapsulatedPictureLength);
 			if (buffer) {
 				sceIoLseek32(fd, ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
 				sceIoRead(fd, buffer, ID3->ID3EncapsulatedPictureLength);
@@ -74,7 +74,7 @@ int MP3_Init(char *path) {
 				metadata.cover_image = vita2d_load_JPEG_ARM_buffer(buffer, ID3->ID3EncapsulatedPictureLength, 0, 0, 0);
 				vita2d_JPEG_ARM_decoder_finish();
 
-				sceLibcFree(buffer);
+				free(buffer);
 			}
 		}
 	}
@@ -82,7 +82,7 @@ int MP3_Init(char *path) {
 		Menu_UnloadExternalCover();
 		SceUID fd = sceIoOpen(path, SCE_O_RDONLY, 0);
 		if (fd >= 0) {
-			char *buffer = sceLibcMalloc(ID3->ID3EncapsulatedPictureLength);
+			char *buffer = malloc(ID3->ID3EncapsulatedPictureLength);
 			if (buffer) {
 				sceIoLseek32(fd, ID3->ID3EncapsulatedPictureOffset, SCE_SEEK_SET);
 				sceIoRead(fd, buffer, ID3->ID3EncapsulatedPictureLength);
@@ -90,12 +90,12 @@ int MP3_Init(char *path) {
 
 				metadata.cover_image = vita2d_load_PNG_buffer(buffer);
 
-				sceLibcFree(buffer);
+				free(buffer);
 			}
 		}
 	}
 
-	sceLibcFree(ID3);
+	free(ID3);
 
 	//Wait until SceShell is ready
 	while (pb_stats.currentState == SCE_SHELLAUDIO_STOP) {

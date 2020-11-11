@@ -2,9 +2,10 @@
 #include <psp2/kernel/clib.h>
 #include <psp2/kernel/threadmgr.h>
 #include <psp2/vshbridge.h>
-#include <psp2/libc.h>
 #include <psp2/appmgr.h>
 #include <psp2/ime.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "config.h"
 #include "touch.h"
@@ -89,8 +90,8 @@ static void Menu_DisplayDeviceSettings(void) {
         if (pressed & SCE_CTRL_ENTER) {
             if (FS_DirExists(menu_items[selection])) {
                 config.device = selection;
-                sceLibcStrcpy(root_path, menu_items[config.device]);
-				sceLibcStrcpy(cwd, root_path);
+                strcpy(root_path, menu_items[config.device]);
+				strcpy(cwd, root_path);
                 sceIoRemove("savedata0:lastdir.txt");
                 Dirbrowse_PopulateFiles(SCE_TRUE);
             }
@@ -273,7 +274,7 @@ void Menu_OnImeEvent(void *arg, const SceImeEvent *e)
 		case 2:
 			if (motion_degree_outval_utf8[0] == '\0' || motion_degree_outval_utf8[0] == '0')
 				motion_degree_outval_utf8[0] = '1';
-			config.motion_degree = sceLibcAtoi(motion_degree_outval_utf8);
+			config.motion_degree = atoi(motion_degree_outval_utf8);
 			break;
 		}
 		sceImeClose();

@@ -7,9 +7,10 @@
 #include "config.h"
 
 static int audio_ready = 0;
-static short vitaAudioSoundBuffer[2][VITA_NUM_AUDIO_SAMPLES][2];
+static short vitaAudioSoundBuffer[2][2048][2];
 static VITA_audio_channelinfo vitaAudioStatus;
 static volatile int audio_terminate = 0;
+static int grain = VITA_NUM_AUDIO_SAMPLES;
 
 extern SceUID event_flag_uid;
 
@@ -80,7 +81,7 @@ int vitaAudioInit(int frequency, SceAudioOutMode mode) {
 	vitaAudioStatus.callback = 0;
 	vitaAudioStatus.userdata = 0;
 
-	if ((vitaAudioStatus.handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, VITA_NUM_AUDIO_SAMPLES, frequency, mode)) < 0) {
+	if ((vitaAudioStatus.handle = sceAudioOutOpenPort(SCE_AUDIO_OUT_PORT_TYPE_BGM, grain, frequency, mode)) < 0) {
 		ret = -1;
 		goto error;
 	}
@@ -116,6 +117,10 @@ error:
 void vitaAudioEndPre(void) {
 	audio_ready = 0;
 	audio_terminate = 1;
+}
+
+void vitaAudioPreSetGrain(int ngrain) {
+	grain = ngrain;
 }
 
 void vitaAudioEnd(void) {

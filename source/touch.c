@@ -1,8 +1,8 @@
 #include <psp2/touch.h>
 #include <psp2/kernel/clib.h>
-#include <psp2/libc.h>
 #include <psp2/sysmodule.h>
 #include <psp2/systemgesture.h>
+#include <stdlib.h>
 
 #include "touch.h"
 
@@ -16,7 +16,7 @@ int Touch_Init(void) {
 	sceSysmoduleLoadModule(SCE_SYSMODULE_SYSTEM_GESTURE);
 	sceSystemGestureInitializePrimitiveTouchRecognizer(NULL);
 
-	touch_recognizers = (SceSystemGestureTouchRecognizer *)sceLibcCalloc(TOUCH_RECOGNIZERS_NUM, sizeof(SceSystemGestureTouchRecognizer));
+	touch_recognizers = (SceSystemGestureTouchRecognizer *)calloc(TOUCH_RECOGNIZERS_NUM, sizeof(SceSystemGestureTouchRecognizer));
 	SceSystemGestureRectangle rect;
 	rect.x = BTN_PLAY_X * 2;
 	rect.y = BTN_MAIN_Y * 2;

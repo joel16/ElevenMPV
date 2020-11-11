@@ -1,5 +1,5 @@
 #include <psp2/kernel/clib.h>
-#include <psp2/libc.h>
+#include <string.h>
 
 #include "audio.h"
 #include "xmp.h"
@@ -22,7 +22,7 @@ int XM_Init(const char *path) {
 	xmp_get_module_info(xmp, &module_info);
 	if (module_info.mod->name[0] != '\0') {
         metadata.has_meta = SCE_TRUE;
-		sceLibcStrcpy(metadata.title, module_info.mod->name);
+		strcpy(metadata.title, module_info.mod->name);
     }
 
 	return 0;

@@ -25,6 +25,7 @@ void vitaAudioSetChannelCallback(vitaAudioCallback_t callback, void *userdata);
 int vitaAudioInit(int frequency, SceAudioOutMode mode);
 void vitaAudioEndPre(void);
 void vitaAudioEnd(void);
+void vitaAudioPreSetGrain(int grain);
 
 #ifdef __cplusplus
 }
