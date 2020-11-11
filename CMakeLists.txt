@@ -56,7 +56,7 @@ add_executable(${PROJECT_NAME}
   source/menus/menu_displayfiles.c
   source/menus/menu_settings.c
   source/psp2_compat.c
-  source/fios2_common.c
+  #source/fios2_common.c
 )
 
 target_link_libraries(${PROJECT_NAME}

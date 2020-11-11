@@ -296,7 +296,19 @@ static int AT3_Init_RIFF(const char *path) {
 	}
 	index += 8;
 
-	SceUInt8 codecType = ea3Header[60];
+	SceUInt8 codecType = 0;
+	switch (* (SceUInt16 *)&ea3Header[20]) {
+	case 0xFFFE:
+		codecType = OMA_CODECID_ATRAC3P;
+		break;
+	case 0x0270:
+		codecType = OMA_CODECID_ATRAC3;
+		break;
+	default:
+		return -1;
+		break;
+	}
+
 	SceUInt8 param1;
 	SceUInt8 param2;
 
@@ -306,20 +318,21 @@ static int AT3_Init_RIFF(const char *path) {
 	}
 	else if (codecType == OMA_CODECID_ATRAC3) {
 		//Everything here is hardcoded: no ATRAC3 header documentation anywhere
-		param1 = ea3Header[61];
-		if (param1 == 2)
-			param1 = 1;
 
-		param2 = ea3Header[63];
-		switch (param2) {
-		case 0x18:
+		SceUInt16 codecInfo;
+		codecInfo = *(SceUInt16 *)&ea3Header[28];
+		switch (codecInfo) {
+		case 0x204C:
 			param2 = 0x60;
+			param1 = 1;
 			break;
-		case 0x26:
+		case 0x3324:
 			param2 = 0x98;
+			param1 = 0;
 			break;
-		case 0x30:
+		case 0x4099:
 			param2 = 0xC0;
+			param1 = 0;
 			break;
 		default:
 			return -1;
@@ -384,8 +397,8 @@ void AT3_Decode(void *buf, unsigned int length, void *userdata) {
 
 	codecCtrl.pEs = streamBuffer[bufindex] + readOffset;
 	codecCtrl.pPcm = buf;
-	if (sceAudiocodecDecode(&codecCtrl, codecType) < 0) {}
-		//playing = SCE_FALSE;
+	if (sceAudiocodecDecode(&codecCtrl, codecType) < 0)
+		playing = SCE_FALSE;
 	readOffset += codecCtrl.inputEsSize;
 
 	callCount++;

@@ -16,7 +16,7 @@
 #include "touch.h"
 #include "utils.h"
 #include "psp2_compat.h"
-#include "fios2_common.h"
+//#include "fios2_common.h"
 
 SceUID main_thread_uid;
 SceUID event_flag_uid;
