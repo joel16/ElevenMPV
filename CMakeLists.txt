@@ -13,7 +13,7 @@ include("$ENV{DOLCESDK}/share/dolce.cmake" REQUIRED)
 project(ElevenMPV)
 set(VITA_APP_NAME "Eleven Music Player")
 set(VITA_TITLEID  "GRVA00008")
-set(VITA_VERSION  "03.80")
+set(VITA_VERSION  "03.81")
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Os -Wl,--no-wchar-size-warning,--no-enum-size-warning -nostdlib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
