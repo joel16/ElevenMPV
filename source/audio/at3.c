@@ -352,7 +352,7 @@ int AT3_Init(const char *path) {
 	char* ext = sceClibStrrchr(path, '.');
 	if (!sceClibStrncasecmp(ext, ".oma", 4) || !sceClibStrncasecmp(ext, ".aa3", 4))
 		return AT3_Init_OMA(path);
-	else if (!sceClibStrncasecmp(ext, ".at3", 4))
+	else if (!sceClibStrncasecmp(ext, ".at3", 4) || !sceClibStrncasecmp(ext, ".gta", 4))
 		return AT3_Init_RIFF(path);
 	else
 		return -1;
