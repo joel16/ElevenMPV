@@ -84,7 +84,7 @@ static int Menu_GetMusicList(void) {
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "xm", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "at9", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "m4a", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "aac", 4)) ||
 				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "oma", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "aa3", 4)) ||
-				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "at3", 4))) {
+				(!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "at3", 4)) || (!sceClibStrncasecmp(FS_GetFileExt(entries[i].d_name), "gta", 4))) {
 				strcpy(playlist[count], cwd);
 				strcpy(playlist[count] + strlen(playlist[count]), entries[i].d_name);
 				count++;
