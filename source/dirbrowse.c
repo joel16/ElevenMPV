@@ -187,9 +187,10 @@ void Dirbrowse_DisplayFiles(void) {
 				vita2d_draw_texture(icon_dir, 15, 117 + (72 * printed));
 			else if ((!sceClibStrncasecmp(file->ext, "flac", 4)) || (!sceClibStrncasecmp(file->ext, "it", 4)) || (!sceClibStrncasecmp(file->ext, "mod", 4))
 				|| (!sceClibStrncasecmp(file->ext, "mp3", 4)) || (!sceClibStrncasecmp(file->ext, "ogg", 4)) || (!sceClibStrncasecmp(file->ext, "opus", 4))
-				|| (!sceClibStrncasecmp(file->ext, "s3m", 4))|| (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4))
+				|| (!sceClibStrncasecmp(file->ext, "s3m", 4)) || (!sceClibStrncasecmp(file->ext, "wav", 4)) || (!sceClibStrncasecmp(file->ext, "xm", 4))
 				|| (!sceClibStrncasecmp(file->ext, "at9", 4)) || (!sceClibStrncasecmp(file->ext, "m4a", 4)) || (!sceClibStrncasecmp(file->ext, "aac", 4))
-				|| (!sceClibStrncasecmp(file->ext, "oma", 4)) || (!sceClibStrncasecmp(file->ext, "aa3", 4)) || (!sceClibStrncasecmp(file->ext, "at3", 4)))
+				|| (!sceClibStrncasecmp(file->ext, "oma", 4)) || (!sceClibStrncasecmp(file->ext, "aa3", 4)) || (!sceClibStrncasecmp(file->ext, "at3", 4))
+				|| (!sceClibStrncasecmp(file->ext, "gta", 4)))
 				vita2d_draw_texture(icon_audio, 15, 117 + (72 * printed));
 			else
 				vita2d_draw_texture(icon_file, 15, 117 + (72 * printed));

@@ -86,7 +86,7 @@ int Audio_Init(const char *path) {
 		file_type = FILE_TYPE_ATRAC9;
 	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "m4a", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aac", 3)))
 		file_type = FILE_TYPE_AAC;
-	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "oma", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aa3", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "at3", 3)))
+	else if ((!sceClibStrncasecmp(FS_GetFileExt(path), "oma", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "aa3", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "at3", 3)) || (!sceClibStrncasecmp(FS_GetFileExt(path), "gta", 3)))
 		file_type = FILE_TYPE_AT3;
 
 	switch(file_type) {
