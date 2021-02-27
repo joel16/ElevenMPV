@@ -1,0 +1,13 @@
+#ifndef _ELEVENMPV_AUDIO_FLAC_H_
+#define _ELEVENMPV_AUDIO_FLAC_H_
+
+int FLAC_Init(const char *path);
+SceUInt32 FLAC_GetSampleRate(void);
+SceUInt8 FLAC_GetChannels(void);
+void FLAC_Decode(void *buf, unsigned int length, void *userdata);
+SceUInt64 FLAC_GetPosition(void);
+SceUInt64 FLAC_GetLength(void);
+SceUInt64 FLAC_Seek(SceUInt64 index);
+void FLAC_Term(void);
+
+#endif
