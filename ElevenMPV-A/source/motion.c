@@ -19,7 +19,7 @@ void Motion_SetState(SceBool state) {
 }
 
 int Motion_GetCommand(void) {
-	int ret;
+	int ret = 0;
 	sceMotionGetState(&motion_state_new);
 	if (motion_state_new.basicOrientation.x != 0 && motion_state_old.basicOrientation.x == 0) {
 		motion_timer = sceKernelGetProcessTimeLow();
