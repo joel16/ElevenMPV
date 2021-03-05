@@ -49,3 +49,12 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# VDS
+*.vs
+eboot.bin
+eboot2.bin
+param.sfo
+param2.sfo
+PSVita_Debug
+PSVita_Release
