@@ -59,7 +59,6 @@ typedef struct SceSharedFbInfo { // size is 0x58
 void Utils_SetMax(int *set, int value, int max);
 void Utils_SetMin(int *set, int value, int min);
 int Utils_InitAppUtil(void);
-int Utils_TermAppUtil(void);
 int Utils_GetEnterButton(void);
 int Utils_GetCancelButton(void);
 int Utils_Alphasort(const void *p1, const void *p2);

@@ -22,7 +22,7 @@ void metadata_cb(void* pUserData, drflac_metadata* pMetadata) {
 			}
 			else if (!sceClibStrncasecmp("image/png", pMetadata->data.picture.mime, 9)) {
 				Menu_UnloadExternalCover();
-				metadata.cover_image = vita2d_load_PNG_buffer(pMetadata->data.picture.pPictureData);
+				metadata.cover_image = vita2d_load_PNG_buffer(pMetadata->data.picture.pPictureData, pMetadata->data.picture.pictureDataSize);
 				metadata.has_meta = SCE_TRUE;
 			}
 		}

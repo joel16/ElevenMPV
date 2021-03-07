@@ -211,7 +211,7 @@ static int AT3_Init_OMA(const char *path) {
 				sceIoRead(fd, buffer, ID3->ID3EncapsulatedPictureLength);
 				sceIoClose(fd);
 
-				metadata.cover_image = vita2d_load_PNG_buffer(buffer);
+				metadata.cover_image = vita2d_load_PNG_buffer(buffer, ID3->ID3EncapsulatedPictureLength);
 
 				free(buffer);
 			}

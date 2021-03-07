@@ -71,7 +71,7 @@ int OPUS_Init(const char *path) {
 				}
 				else if (picture_tag.format == OP_PIC_FORMAT_PNG) {
 					Menu_UnloadExternalCover();
-					metadata.cover_image = vita2d_load_PNG_buffer(picture_tag.data);
+					metadata.cover_image = vita2d_load_PNG_buffer(picture_tag.data, picture_tag.data_length);
 				}
 			}
 		}
