@@ -203,7 +203,7 @@ int main() {
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
 	if (s_memGrown) {
-		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024;
+		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024 + 512 * 1024;
 		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
 	}
 	else {
