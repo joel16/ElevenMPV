@@ -23,120 +23,81 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\common.c">
+    <ClCompile Include="source\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\config.c">
+    <ClCompile Include="source\menus\menu_displayfiles.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="source\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\dirbrowse.c">
+    <ClCompile Include="source\paf_runtime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\fs.c">
+    <ClCompile Include="source\menus\menu_settings.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="source\config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\main.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\motion.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\textures.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\touch.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\utils.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="source\audio\at3.c">
+    <ClCompile Include="source\audio\vitaaudiolib.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\audio.c">
+    <ClCompile Include="source\audio\flac.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\flac.c">
+    <ClCompile Include="source\audio\audio.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="source\menus\menu_audioplayer.cpp">
+      <Filter>Source Files\menus</Filter>
+    </ClCompile>
+    <ClCompile Include="source\motion.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="source\audio\opus.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="source\audio\ogg.cpp">
+      <Filter>Source Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="source\audio\xm.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
     <ClCompile Include="source\audio\id3.c">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\mp3.c">
+    <ClCompile Include="source\audio\at3.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\ogg.c">
+    <ClCompile Include="source\audio\sh_common.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\opus.c">
+    <ClCompile Include="source\audio\mp3.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\sh_common.c">
-      <Filter>Source Files\audio</Filter>
+    <ClCompile Include="source\paf_libc_bridge.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\audio\vitaaudiolib.c">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="source\audio\xm.c">
-      <Filter>Source Files\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="source\menus\menu_audioplayer.c">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="source\menus\menu_displayfiles.c">
-      <Filter>Source Files\menus</Filter>
-    </ClCompile>
-    <ClCompile Include="source\menus\menu_settings.c">
-      <Filter>Source Files\menus</Filter>
+    <ClCompile Include="source\paf_libc_bridge_asm.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\dirbrowse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\fs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\textures.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\audio\at3.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
     <ClInclude Include="include\audio\audio.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
-    <ClInclude Include="include\audio\flac.h">
       <Filter>Header Files\audio</Filter>
     </ClInclude>
     <ClInclude Include="include\audio\id3.h">
       <Filter>Header Files\audio</Filter>
     </ClInclude>
-    <ClInclude Include="include\audio\mp3.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
-    <ClInclude Include="include\audio\ogg.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
-    <ClInclude Include="include\audio\opus.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
-    <ClInclude Include="include\audio\sh_common.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
     <ClInclude Include="include\audio\vitaaudiolib.h">
-      <Filter>Header Files\audio</Filter>
-    </ClInclude>
-    <ClInclude Include="include\audio\xm.h">
       <Filter>Header Files\audio</Filter>
     </ClInclude>
     <ClInclude Include="include\menus\menu_audioplayer.h">
@@ -151,7 +112,10 @@
     <ClInclude Include="include\motion_e.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\touch_e.h">
+    <ClInclude Include="include\config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ElevenMPV-A-Common\include\ipc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

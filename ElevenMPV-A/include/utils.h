@@ -4,17 +4,13 @@
 #include <libime.h>
 #include <notification_util.h>
 #include <kernel.h>
+#include <paf.h>
 
-#define ALIGN(x, a)	(((x) + ((a) - 1)) & ~((a) - 1))
+using namespace paf;
 
-#define JPEGDEC_SIZE_LIMIT 262144 //500x500
-
-#define SCE_KERNEL_ATTR_MULTI (0x00001000U)
-
-#define SCE_KERNEL_EVF_WAITMODE_AND			(0x00000000U)
-#define SCE_KERNEL_EVF_WAITMODE_OR			(0x00000001U)
-#define SCE_KERNEL_EVF_WAITMODE_CLEAR_ALL	(0x00000002U)
-#define SCE_KERNEL_EVF_WAITMODE_CLEAR_PAT	(0x00000004U)
+#define ROUND_UP(x, a)	(((x) + ((a) - 1)) & ~((a) - 1))
+#define ROUND_DOWN(x, a) ((x) & ~((a) - 1))
+#define IS_ALIGNED(x, a) (((x) & ((a) - 1)) == 0)
 
 #define SCE_APP_EVENT_UNK0					(0x00000003)
 #define SCE_APP_EVENT_ON_ACTIVATE			(0x10000001)
@@ -25,55 +21,113 @@
 
 #define FLAG_ELEVENMPVA_IS_FG 1
 #define FLAG_ELEVENMPVA_IS_DECODER_USED 2
-#define FLAG_ELEVENMPVA_IS_POWER_LOCKED 4
-#define FLAG_ELEVENMPVA_IS_FINISHED_PLAYLIST 8
-#define FLAG_ELEVENMPVA_IS_READY_NOTIFY 16
-#define FLAG_ELEVENMPVA_IS_END_NOTIFY 32
-#define FLAG_ELEVENMPVA_IS_UPDATE_NOTIFY 64
 
-typedef struct SceSharedFbInfo { // size is 0x58
-	void* base1;		// cdram base
-	int memsize;
-	void* base2;		// cdram base
-	int unk_0C;
-	void *unk_10;
-	int unk_14;
-	int unk_18;
-	int unk_1C;
-	int unk_20;
-	int unk_24;		// 960
-	int unk_28;		// 960
-	int unk_2C;		// 544
-	int unk_30;
-	int curbuf;
-	int unk_38;
-	int unk_3C;
-	int unk_40;
-	int unk_44;
-	int owner;
-	int unk_4C;
-	int unk_50;
-	int unk_54;
-} SceSharedFbInfo;
+extern "C" {
 
-void Utils_SetMax(int *set, int value, int max);
-void Utils_SetMin(int *set, int value, int min);
-int Utils_InitAppUtil(void);
-int Utils_GetEnterButton(void);
-int Utils_GetCancelButton(void);
-int Utils_Alphasort(const void *p1, const void *p2);
-char *Utils_Basename(const char *filename);
-void Utils_InitPowerTick(void);
-SceBool Utils_IsDecoderUsed(void);
-SceBool Utils_IsFinishedPlaylist(void);
-void Utils_LoadIme(SceImeParam* param);
-void Utils_UnloadIme(void);
-void Utils_Utf8ToUtf16(SceWChar16* dst, char* src);
-void Utils_NotificationEventHandler(void *udata);
-void Utils_NotificationEnd(void);
-void Utils_NotificationProgressBegin(SceNotificationUtilProgressInitParam* init_param);
-void Utils_NotificationProgressUpdate(SceNotificationUtilProgressUpdateParam* update_param);
-void Utils_WriteSafeMem(void* data, SceSize buf_size, SceOff offset);
-void Utils_ReadSafeMem(void* buf, SceSize buf_size, SceOff offset);
+	typedef struct SceAppMgrEvent { // size is 0x64
+		SceInt32 event;				/* Event ID */
+		SceUID appId;			/* Application ID. Added when required by the event */
+		char  param[56];		/* Parameters to pass with the event */
+	} SceAppMgrEvent;
+
+	int sceAppMgrReceiveEventNum(SceUInt32 *num);
+	int sceAppMgrReceiveEvent(SceAppMgrEvent *appEvent);
+	int sceAppMgrQuitForNonSuspendableApp();
+	int sceAppMgrAcquireBgmPortForMusicPlayer();
+	int sceAudioOutSetEffectType(SceInt32 type);
+	int sceAppMgrAcquireBgmPortWithPriority(SceUInt32 priority);
+
+	int sceShellUtilExitToLiveBoard();
+}
+
+static const SceUInt32 k_supportedExtNum = 15;
+static const SceUInt32 k_supportedCoverExtNum = 4;
+
+static const char *k_supportedExtList[] =
+{
+	"it",
+	"mod",
+	"xm",
+	"s3m",
+	"oma",
+	"aa3",
+	"at3",
+	"ogg",
+	"mp3",
+	"opus",
+	"flac",
+	"wav",
+	"at9",
+	"m4a",
+	"aac"
+};
+
+static const char *k_supportedCoverExtList[] =
+{
+	"jpg",
+	"jpeg",
+	"png",
+	"gif"
+};
+
+class EMPVAUtils
+{
+public:
+
+	static SceVoid Init();
+
+	static SceBool IsSupportedExtension(const char *ext);
+
+	static SceBool IsSupportedCoverExtension(const char *ext);
+
+	static SceBool IsRootDevice(const char *path);
+
+	static const char *GetFileExt(const char *filename);
+
+	static SceUInt32 GetHash(const char *name);
+
+	static SceWChar16 *GetStringWithNum(const char *name, SceUInt32 num);
+
+	static SceUInt32 Downscale(SceInt32 ix, SceInt32 iy, ScePVoid ibuf, SceInt32 ox, SceInt32 oy, ScePVoid obuf);
+
+	static SceInt32 Alphasort(const void *p1, const void *p2);
+
+	static SceBool IsDecoderUsed();
+
+	static SceBool IsSleep();
+
+	static SceInt32 GetDecoderType(const char *path);
+
+	static SceVoid SetPowerTickTask(SceBool enable);
+
+	static SceVoid Exit();
+
+	static SceVoid Activate();
+
+	static SceVoid Deactivate();
+
+	class IPC
+	{
+	public:
+
+		static SceVoid Enable();
+
+		static SceVoid Disable();
+
+		static SceUInt32 PeekTx();
+
+		static SceVoid SendInfo(WString *title, WString *artist, WString *album, SceInt32 playBtState);
+
+	};
+
+private:
+
+	static SceVoid PowerTickTask(ScePVoid pUserData);
+
+	static SceVoid AppWatchdogTask(ScePVoid pUserData);
+
+	static SceInt32 PowerCallback(SceInt32 notifyId, SceInt32 notifyCount, SceInt32 powerInfo, ScePVoid common);
+};
+
 
 #endif

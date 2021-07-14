@@ -3,28 +3,44 @@
 
 #include <ctrl.h>
 #include <appmgr.h>
+#include <paf.h>
 #include <vita2d_sys.h>
+#include <scejpegenc.h>
 
-/// Checks whether a result code indicates success.
-#define R_SUCCEEDED(res)   ((res)>=0)
-/// Checks whether a result code indicates failure.
-#define R_FAILED(res)      ((res)<0)
-/// Returns the level of a result code.
+#include "menu_displayfiles.h"
+#include "menu_settings.h"
+#include "menu_audioplayer.h"
+#include "config.h"
+
+using namespace paf;
 
 #define MAX_FILES 1024
 
-#define FILES_PER_PAGE 6
+extern SceUID g_mainThreadUid;
+extern SceUID g_eventFlagUid;
 
-#define FLIP_DELAY 100
+extern SceBool g_isPlayerActive;
 
-//#define DEBUG
+extern Plugin *g_empvaPlugin;
+extern widget::Widget *g_root;
+extern widget::Widget *g_root_page;
+extern widget::Widget *g_settings_page;
+extern widget::Widget *g_player_page;
+extern widget::Widget *g_settings_option;
+extern widget::Widget *g_top_text;
+extern graphics::Texture *g_commonBgTex;
+extern widget::BusyIndicator *g_commonBusyInidcator;
+extern widget::Widget *g_commonOptionDialog;
 
-extern vita2d_pvf *font;
-extern int SCE_CTRL_ENTER, SCE_CTRL_CANCEL;
-extern SceUInt32 pressed;
-extern int position;
-extern int file_count;
-extern char cwd[512];
-extern char root_path[8];
+extern graphics::Texture *g_texCheckMark;
+extern graphics::Texture *g_texTransparent;
+extern graphics::Surface *g_currentCoverSurf;
+
+extern menu::audioplayer::Audioplayer *g_currentPlayerInstance;
+extern menu::displayfiles::Page *g_currentDispFilePage;
+extern menu::settings::SettingsButtonCB *g_settingsButtonCB;
+extern config::Config *g_config;
+
+extern menu::displayfiles::CoverLoaderThread *g_currentCoverLoader;
 
 #endif

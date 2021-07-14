@@ -1,6 +1,7 @@
 #include <kernel.h>
-#include <string.h>
-#include <stdlib.h>
+#include <paf/stdc.h>
+/*#include <string.h>
+#include <stdlib.h>*/
 
 #include "id3.h"
 
@@ -287,7 +288,7 @@ void ParseID3v2_2(const char *mp3path, struct ID3Tag *id3tag)
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 8, id3tag->ID3TrackText);
-            id3tag->ID3Track = atoi(id3tag->ID3TrackText);
+            id3tag->ID3Track = sce_paf_atoi(id3tag->ID3TrackText);
          }
          else if(!sceClibStrncmp("TYE",tag,3)) /* Year */
          {
@@ -298,7 +299,7 @@ void ParseID3v2_2(const char *mp3path, struct ID3Tag *id3tag)
          {
                         sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 264, buffer);
-            id3tag->ID3Length = atoi(buffer);
+            id3tag->ID3Length = sce_paf_atoi(buffer);
          }
          else if(!sceClibStrncmp("COM",tag,3)) /* Comment */
          {
@@ -313,7 +314,7 @@ void ParseID3v2_2(const char *mp3path, struct ID3Tag *id3tag)
             {
                 id3tag->ID3GenreText[0] = ' ';
                 id3tag->ID3GenreText[strlen(id3tag->ID3GenreText) - 1] = '\0';
-                int index = atoi(id3tag->ID3GenreText);
+                int index = sce_paf_atoi(id3tag->ID3GenreText);
                 if (index >= 0 && index < genreNumber)
                     strcpy(id3tag->ID3GenreText, genreList[index].text);
             }
@@ -397,7 +398,7 @@ void ParseID3v2_3(const char *mp3path, struct ID3Tag *id3tag)
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 8, id3tag->ID3TrackText);
-            id3tag->ID3Track = atoi(id3tag->ID3TrackText);
+            id3tag->ID3Track = sce_paf_atoi(id3tag->ID3TrackText);
          }
          else if(!sceClibStrncmp("TYER",tag,4)) /* Year */
          {
@@ -408,7 +409,7 @@ void ParseID3v2_3(const char *mp3path, struct ID3Tag *id3tag)
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 264, buffer);
-            id3tag->ID3Length = atol(buffer) / 1000;
+            id3tag->ID3Length = sce_paf_atoi(buffer) / 1000;
          }
          else if(!sceClibStrncmp("TCON",tag,4)) /* Genre */
          {
@@ -418,7 +419,7 @@ void ParseID3v2_3(const char *mp3path, struct ID3Tag *id3tag)
             {
                 id3tag->ID3GenreText[0] = ' ';
                 id3tag->ID3GenreText[strlen(id3tag->ID3GenreText) - 1] = '\0';
-                int index = atoi(id3tag->ID3GenreText);
+                int index = sce_paf_atoi(id3tag->ID3GenreText);
                 if (index >= 0 && index < genreNumber)
                     strcpy(id3tag->ID3GenreText, genreList[index].text);
             }
@@ -508,7 +509,7 @@ void ParseID3v2_4(const char *mp3path, struct ID3Tag *id3tag)
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 8, id3tag->ID3TrackText);
-            id3tag->ID3Track = atoi(id3tag->ID3TrackText);
+            id3tag->ID3Track = sce_paf_atoi(id3tag->ID3TrackText);
          }
          else if(!sceClibStrncmp("TYER",tag,4)) /* Year */
          {
@@ -519,7 +520,7 @@ void ParseID3v2_4(const char *mp3path, struct ID3Tag *id3tag)
          {
             sceIoLseek(fp, 1, SCE_SEEK_CUR);
             readTagData(fp, tag_length - 1, 264, buffer);
-            id3tag->ID3Length = atol(buffer) / 1000;
+            id3tag->ID3Length = sce_paf_atoi(buffer) / 1000;
          }
          else if(!sceClibStrncmp("TCON",tag,4)) /* Genre */
          {
@@ -594,7 +595,7 @@ int ParseID3v1(const char *mp3path, struct ID3Tag *id3tag){
     sceIoLseek(id3fd, -128, SEEK_END);
     sceIoRead(id3fd,id3buffer,128);
 
-    if (strstr(id3buffer,"TAG") != NULL){
+    if (sceClibStrstr(id3buffer,"TAG") != NULL){
         sceIoLseek(id3fd, -125, SEEK_END);
         sceIoRead(id3fd,id3tag->ID3Title,30);
         id3tag->ID3Title[30] = '\0';
@@ -644,7 +645,7 @@ int ParseID3v1(const char *mp3path, struct ID3Tag *id3tag){
 }
 
 // Main function:
-int ParseID3(char *mp3path, struct ID3Tag *target)
+int ParseID3(const char *mp3path, struct ID3Tag *target)
 {
     memset(target, 0, sizeof(struct ID3Tag));
 

@@ -45,17 +45,21 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(ProjectDir)libs\include;$(ProjectDir)include\audio;$(ProjectDir)include\menus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(ProjectDir)libs\include;$(ProjectDir)include\audio;$(ProjectDir)include\menus;$(SolutionDir)ElevenMPV-A-Common\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStd>Cpp11</CppLanguageStd>
+      <InstructionSet>Thumb2</InstructionSet>
+      <OptimizationLevel>Level3</OptimizationLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceVideodec_stub;-lSceJpegEnc_stub;-lSceFpu;-lsnc;$(OutDir)ElevenMPV-A-PluginManager_stub.a;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateSnMapFile>FullMapFile</GenerateSnMapFile>
+      <AdditionalOptions>--no-standard-libraries</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
 "$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubsfo.exe" "$(ProjectDir)param.sfx" "$(OutDir)param.sfo"
-"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/res" res --file "$(ProjectDir)CONTENTS/module" module "$(OutDir)$(ProjectName).vpk"
+"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/module" module  --file "$(ProjectDir)CONTENTS/empva_plugin.rco" empva_plugin.rco "$(OutDir)$(ProjectName).vpk"
 copy /Y "$(OutDir)eboot.bin" "$(ProjectDir)CONTENTS/eboot.bin"
 copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
 "$(SCE_ROOT_DIR)/PSP2/Tools/Publishing Tools/bin/ext/make_pkg.exe" --output $(OutDir) "$(ProjectDir)package.conf" $(ProjectDir)</Command>
@@ -67,19 +71,19 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <OptimizationLevel>Level3</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(ProjectDir)libs\include;$(ProjectDir)include\audio;$(ProjectDir)include\menus;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)include;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(ProjectDir)libs\include;$(ProjectDir)include\audio;$(ProjectDir)include\menus;$(SolutionDir)ElevenMPV-A-Common\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <CppLanguageStd>Cpp11</CppLanguageStd>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-    <Link>
       <InfoStripping>StripSymsAndDebug</InfoStripping>
-      <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>-lvita2d_sys;-lopusfile;-lopus;-lvorbisfile;-lvorbis;-logg;-lxmp-lite;-lScePng;-lSceDeflt;-lShellAudio;-lSceSysmem_stub;-lSceThreadMgr_stub;-lSceThreadmgrCoredumpTime_stub;-lSceModuleMgr_stub;-lSceProcessMgr_stub;-lSceIofilemgr_stub;-lSceLibRng_stub;-lSceAppMgr_stub;-lSceAppMgrUser_stub;-lSceSharedFb_stub;-lSceAppUtil_stub;-lSceAudio_stub;-lSceCtrl_stub;-lSceCommonDialog_stub;-lSceDisplayUser_stub;-lSceDisplay_stub;-lSceNotificationUtilProgress_stub;-lSceGxm_stub;-lSceGxmInternalForVsh_stub;-lSceGxmInternalForTest_stub;-lSceGxmInternal_stub;-lSceGpuEs4User_stub;-lSceGpuEs4UserForVsh_stub;-lScePower_stub;-lSceShellSvc_stub;-lSceSysmodule_stub;-lSceTouch_stub;-lSceShellUtil_stub;-lSceSystemGesture_stub;-lSceIme_stub;-lSceMotion_stub;-lSceVshBridge_stub;-lSceNotificationUtil_stub;-lSceJpegArm_stub;-lScePvf_stub;-lSceDbg_stub;-lSceFios2_stub;-lSceDmacMgr_stub;-lSceAudiocodec_stub;-lSceJpegUser_stub;-lSceRtabi_stub;-ltaihenUnsafe_stub;-lScePafThread_stub;-lScePafStdc_stub;-lScePafToplevel_stub;-lScePafResource_stub;-lScePafWidget_stub;-lScePafMisc_stub;-lScePafCommon_stub;-lScePafGraphics_stub;-lSceLibKernel_stub;-lSceVideodec_stub;-lSceJpegEnc_stub;-lSceFpu;-lsnc;$(OutDir)ElevenMPV-A-PluginManager_stub.a;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SCE_PSP2_SDK_DIR)\target\lib\vdsuite;$(ProjectDir)libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>--no-standard-libraries %(AdditionalOptions)</AdditionalOptions>
     </Link>
     <PostBuildEvent>
       <Command>"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubprx.exe" --strip --compress --boot-param "$(ProjectDir)ebootparam.bin" "$(LocalDebuggerCommand)" "$(OutDir)eboot.bin"
 "$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubsfo.exe" "$(ProjectDir)param.sfx" "$(OutDir)param.sfo"
-"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/res" res --file "$(ProjectDir)CONTENTS/module" module "$(OutDir)$(ProjectName).vpk"
+"$(SCE_PSP2_SDK_DIR)/host_tools/build/bin/vdsuite-pubgen.exe" --file "$(OutDir)eboot.bin" eboot.bin  --file "$(OutDir)param.sfo" sce_sys/param.sfo --file "$(ProjectDir)CONTENTS/sce_sys/icon0.png" sce_sys/icon0.png --file "$(ProjectDir)CONTENTS/sce_sys/pic0.png" sce_sys/pic0.png --file "$(ProjectDir)CONTENTS/sce_sys/livearea" sce_sys/livearea --file "$(ProjectDir)CONTENTS/module" module  --file "$(ProjectDir)CONTENTS/empva_plugin.rco" empva_plugin.rco "$(OutDir)$(ProjectName).vpk"
 copy /Y "$(OutDir)eboot.bin" "$(ProjectDir)CONTENTS/eboot.bin"
 copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
 "$(SCE_ROOT_DIR)/PSP2/Tools/Publishing Tools/bin/ext/make_pkg.exe" --output $(OutDir) "$(ProjectDir)package.conf" $(ProjectDir)</Command>
@@ -87,50 +91,41 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="source\audio\at3.c" />
-    <ClCompile Include="source\audio\audio.c" />
-    <ClCompile Include="source\audio\flac.c" />
+    <ClCompile Include="source\audio\at3.cpp" />
+    <ClCompile Include="source\audio\audio.cpp" />
+    <ClCompile Include="source\audio\flac.cpp" />
     <ClCompile Include="source\audio\id3.c" />
-    <ClCompile Include="source\audio\mp3.c" />
-    <ClCompile Include="source\audio\ogg.c" />
-    <ClCompile Include="source\audio\opus.c" />
-    <ClCompile Include="source\audio\sh_common.c" />
-    <ClCompile Include="source\audio\vitaaudiolib.c" />
-    <ClCompile Include="source\audio\xm.c" />
-    <ClCompile Include="source\common.c" />
-    <ClCompile Include="source\config.c" />
-    <ClCompile Include="source\dirbrowse.c" />
-    <ClCompile Include="source\fs.c" />
-    <ClCompile Include="source\main.c" />
-    <ClCompile Include="source\menus\menu_audioplayer.c" />
-    <ClCompile Include="source\menus\menu_displayfiles.c" />
-    <ClCompile Include="source\menus\menu_settings.c" />
-    <ClCompile Include="source\motion.c" />
-    <ClCompile Include="source\textures.c" />
-    <ClCompile Include="source\touch.c" />
-    <ClCompile Include="source\utils.c" />
+    <ClCompile Include="source\audio\mp3.cpp" />
+    <ClCompile Include="source\audio\ogg.cpp" />
+    <ClCompile Include="source\audio\opus.cpp" />
+    <ClCompile Include="source\audio\sh_common.cpp" />
+    <ClCompile Include="source\audio\vitaaudiolib.cpp" />
+    <ClCompile Include="source\audio\xm.cpp" />
+    <ClCompile Include="source\config.cpp" />
+    <ClCompile Include="source\main.cpp" />
+    <ClCompile Include="source\menus\menu_audioplayer.cpp" />
+    <ClCompile Include="source\menus\menu_displayfiles.cpp" />
+    <ClCompile Include="source\menus\menu_settings.cpp" />
+    <ClCompile Include="source\motion.cpp" />
+    <ClCompile Include="source\paf_libc_bridge.cpp" />
+    <ClCompile Include="source\paf_libc_bridge_asm.cpp">
+      <OptimizationLevel Condition="'$(Configuration)|$(Platform)'=='Debug|PSVita'">Level1</OptimizationLevel>
+      <OptimizationLevel Condition="'$(Configuration)|$(Platform)'=='Release|PSVita'">Level1</OptimizationLevel>
+    </ClCompile>
+    <ClCompile Include="source\paf_runtime.cpp" />
+    <ClCompile Include="source\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\audio\at3.h" />
+    <ClInclude Include="..\ElevenMPV-A-Common\include\ipc.h" />
     <ClInclude Include="include\audio\audio.h" />
-    <ClInclude Include="include\audio\flac.h" />
     <ClInclude Include="include\audio\id3.h" />
-    <ClInclude Include="include\audio\mp3.h" />
-    <ClInclude Include="include\audio\ogg.h" />
-    <ClInclude Include="include\audio\opus.h" />
-    <ClInclude Include="include\audio\sh_common.h" />
     <ClInclude Include="include\audio\vitaaudiolib.h" />
-    <ClInclude Include="include\audio\xm.h" />
     <ClInclude Include="include\common.h" />
     <ClInclude Include="include\config.h" />
-    <ClInclude Include="include\dirbrowse.h" />
-    <ClInclude Include="include\fs.h" />
     <ClInclude Include="include\menus\menu_audioplayer.h" />
     <ClInclude Include="include\menus\menu_displayfiles.h" />
     <ClInclude Include="include\menus\menu_settings.h" />
     <ClInclude Include="include\motion_e.h" />
-    <ClInclude Include="include\textures.h" />
-    <ClInclude Include="include\touch_e.h" />
     <ClInclude Include="include\utils.h" />
   </ItemGroup>
   <Import Condition="'$(ConfigurationType)' == 'Makefile' and Exists('$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets')" Project="$(VCTargetsPath)\Platforms\$(Platform)\SCE.Makefile.$(Platform).targets" />

@@ -5,27 +5,51 @@
 extern "C" {
 #endif
 
+#include <paf.h>
 #include <audioout.h>
 
-#define VITA_NUM_AUDIO_SAMPLES 960
+#include "audio.h"
 
-typedef void (* vitaAudioCallback_t)(void *stream, unsigned int length, void *userdata);
+using namespace paf;
 
-typedef struct {
-	int threadhandle;
-	int handle;
-	vitaAudioCallback_t callback;
-	void *userdata;
-} VITA_audio_channelinfo;
+namespace audio {
 
-typedef int (* vitaAudioThreadfunc_t)(int args, void *argp);
+	class DecoderCore
+	{
+	public:
 
-void vitaAudioSetVolume(int left, int right);
-void vitaAudioSetChannelCallback(vitaAudioCallback_t callback, void *userdata);
-int vitaAudioInit(int frequency, int mode);
-void vitaAudioEndPre(void);
-void vitaAudioEnd(void);
-void vitaAudioPreSetGrain(int grain);
+		class DecoderCoreThread : public thread::Thread
+		{
+		public:
+
+			using thread::Thread::Thread;
+
+			SceVoid EntryFunction();
+		};
+
+		typedef struct VITA_audio_channelinfo
+		{
+			DecoderCoreThread *threadhandle;
+			SceInt32 handle;
+			audio::GenericDecoder *decoder;
+			ScePVoid userdata;
+		};
+
+		static SceInt32 Init(SceUInt32 frequency, SceUInt32 mode);
+
+		static SceVoid EndPre();
+
+		static SceVoid PreSetGrain(SceUInt32 ngrain);
+
+		static SceUInt32 GetGrain();
+
+		static SceUInt32 GetDefaultGrain();
+
+		static SceVoid End();
+
+		static SceVoid SetDecoder(audio::GenericDecoder *decoder, ScePVoid userdata);
+	};
+}
 
 #ifdef __cplusplus
 }

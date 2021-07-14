@@ -951,10 +951,10 @@ drflac_bool32 drflac_next_cuesheet_track(drflac_cuesheet_track_iterator* pIter, 
 #define DRFLAC_FREE(p)                      free((p))
 #endif
 #ifndef DRFLAC_COPY_MEMORY
-#define DRFLAC_COPY_MEMORY(dst, src, sz)    sceClibMemcpy((dst), (src), (sz))
+#define DRFLAC_COPY_MEMORY(dst, src, sz)    memcpy((dst), (src), (sz))
 #endif
 #ifndef DRFLAC_ZERO_MEMORY
-#define DRFLAC_ZERO_MEMORY(p, sz)           sceClibMemset((p), 0, (sz))
+#define DRFLAC_ZERO_MEMORY(p, sz)           memset((p), 0, (sz))
 #endif
 
 #define DRFLAC_MAX_SIMD_VECTOR_SIZE                     64  /* 64 for AVX-512 in the future. */
@@ -1552,7 +1552,9 @@ static drflac_bool32 drflac__find_and_seek_to_next_sync_code(drflac_bs* bs)
     for (;;) {
         drflac_uint8 hi;
 
+#ifndef DR_FLAC_NO_CRC
         drflac__reset_crc16(bs);
+#endif
 
         if (!drflac__read_uint8(bs, 8, &hi)) {
             return DRFLAC_FALSE;
@@ -4230,14 +4232,7 @@ drflac_bool32 drflac__read_streaminfo(drflac_read_proc onRead, void* pUserData, 
 static void* drflac__malloc_default(size_t sz, void* pUserData)
 {
 	(void)pUserData;
-	void* ret;
-	if (sz > 0x186A0) {
-		SceUID memid = sceKernelAllocMemBlock("drflac_mem", SCE_KERNEL_MEMBLOCK_TYPE_USER_RW, ROUND_UP(sz, 4 * 1024), NULL);
-		sceKernelGetMemBlockBase(memid, &ret);
-		return ret;
-	}
-	else
-		return DRFLAC_MALLOC(sz);
+	return DRFLAC_MALLOC(sz);
 }
 
 static void* drflac__realloc_default(void* p, size_t sz, void* pUserData)
@@ -4248,16 +4243,8 @@ static void* drflac__realloc_default(void* p, size_t sz, void* pUserData)
 
 static void drflac__free_default(void* p, void* pUserData)
 {
-    (void)pUserData;
-	SceKernelMemBlockInfo info;
-	info.size = sizeof(SceKernelMemBlockInfo);
-	if (sceKernelGetMemBlockInfoByAddr(p, &info) >= 0) {
-		int ret = sceKernelFreeMemBlock(sceKernelFindMemBlockByAddr(p, info.mappedSize));
-		if (ret < 0)
-			DRFLAC_FREE(p);
-	}
-	else
-		DRFLAC_FREE(p);
+	(void)pUserData;
+	DRFLAC_FREE(p);
 }
 
 
@@ -4732,7 +4719,7 @@ drflac_bool32 drflac__init_private(drflac_init_info* pInit, drflac_read_proc onR
     }
 
     DRFLAC_ZERO_MEMORY(pInit, sizeof(*pInit));
-	pInit->bs.cacheL2 = malloc(DR_FLAC_BUFFER_SIZE);
+	pInit->bs.cacheL2 = (drflac_cache_t *)malloc(DR_FLAC_BUFFER_SIZE);
     pInit->onRead       = onRead;
     pInit->onSeek       = onSeek;
     pInit->onMeta       = onMeta;
