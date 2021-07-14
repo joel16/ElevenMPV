@@ -72,9 +72,9 @@ void pafLoadPrx(SceUInt32 flags)
 	SceSysmoduleOpt sysmodule_opt;
 
 	if (flags)
-		init_param.global_heap_size = 12 * 1024 * 1024 + 512 * 1024;
+		init_param.global_heap_size = 12 * 1024 * 1024;
 	else
-		init_param.global_heap_size = 4 * 1024 * 1024 + 512 * 1024;
+		init_param.global_heap_size = 5 * 1024 * 1024;
 
 	init_param.a2 = 0x0000EA60;
 	init_param.a3 = 0x00040000;
@@ -202,13 +202,16 @@ int main() {
 	fwParam.applicationMode = Framework::Mode_ApplicationA;
 	//fwParam.optionalFeatureFlags = Framework::InitParam::FeatureFlag_DisableInternalCallbackChecks;
 
-	if (s_memGrown)
-		fwParam.defaultSurfacePoolSize = 12 * 1024 * 1024;
-	else
+	if (s_memGrown) {
+		fwParam.defaultSurfacePoolSize = 11 * 1024 * 1024;
+		fwParam.textSurfaceCacheSize = 2 * 1024 * 1024;
+	}
+	else {
 		fwParam.defaultSurfacePoolSize = 4 * 1024 * 1024;
+		fwParam.textSurfaceCacheSize = 1 * 1024 * 1024;
+	}
 
-	fwParam.textSurfaceCacheSize = 512 * 1024; // Small sizes may break text display
-	fwParam.graphMemSystemHeapSize = 512 * 1024 * 2;
+	fwParam.graphMemSystemHeapSize = 512 * 1024;
 	//fwParam.graphicsFlags = 7;
 
 	Framework *fw = new Framework(&fwParam);
