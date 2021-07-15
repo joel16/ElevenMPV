@@ -69,7 +69,7 @@ copy /Y "$(OutDir)shell_plugin.suprx" "$(SolutionDir)\ElevenMPV-A\CONTENTS\modul
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|PSVita'">
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
-      <OptimizationLevel>Level2</OptimizationLevel>
+      <OptimizationLevel>Level3</OptimizationLevel>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(SolutionDir)ElevenMPV-A-Common\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CppLanguageStd>Cpp11</CppLanguageStd>

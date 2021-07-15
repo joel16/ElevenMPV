@@ -73,6 +73,7 @@ copy /Y "$(OutDir)param.sfo" "$(ProjectDir)CONTENTS/sce_sys/param.sfo"
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir)include;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\user;$(SCE_PSP2_SDK_DIR)\target\include\vdsuite\common;$(ProjectDir)libs\include;$(ProjectDir)include\audio;$(ProjectDir)include\menus;$(SolutionDir)ElevenMPV-A-Common\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CppLanguageStd>Cpp11</CppLanguageStd>
+      <InstructionSet>Thumb2</InstructionSet>
     </ClCompile>
     <Link>
       <InfoStripping>StripSymsAndDebug</InfoStripping>
