@@ -213,7 +213,7 @@ SceVoid EMPVAUtils::AppWatchdogTask(ScePVoid pUserData)
 					sceMusicPlayerServiceSendEvent(SCE_MUSICCORE_EVENTID_STOP, 0);
 					sceMusicPlayerServiceTerminate();
 				}
-				
+
 				EMPVAUtils::Exit();
 
 				break;
@@ -253,15 +253,11 @@ SceVoid EMPVAUtils::Init()
 SceVoid EMPVAUtils::Exit()
 {
 	SceInt32 ret;
-	char pluginPath[256];
 
 	if (s_shellPluginUID > 0)
 		taiStopUnloadModuleForPid(s_shellPid, s_shellPluginUID, 0, SCE_NULL, 0, SCE_NULL, &ret);
 
-	sce_paf_snprintf(pluginPath, 256, "%s%s%s", "ux0:app/", s_titleid, "/module/exit_module.suprx");
-	SceUID modid = taiLoadStartKernelModule(pluginPath, 0, SCE_NULL, 0);
-	sceAppMgrQuitForNonSuspendableApp();
-	taiStopUnloadKernelModule(modid, 0, SCE_NULL, 0, SCE_NULL, SCE_NULL);
+	sceKernelExitProcess(0);
 }
 
 SceVoid EMPVAUtils::Activate()

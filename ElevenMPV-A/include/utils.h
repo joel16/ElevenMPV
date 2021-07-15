@@ -38,6 +38,8 @@ extern "C" {
 	int sceAppMgrAcquireBgmPortWithPriority(SceUInt32 priority);
 
 	int sceShellUtilExitToLiveBoard();
+
+	SceUID _vshKernelSearchModuleByName(const char *name, SceUInt64 *unk);
 }
 
 static const SceUInt32 k_supportedExtNum = 15;

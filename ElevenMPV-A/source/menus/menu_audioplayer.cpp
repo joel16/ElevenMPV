@@ -201,11 +201,11 @@ SceVoid menu::audioplayer::Audioplayer::RegularTask(ScePVoid pUserData)
 	config::Config::EMPVAConfig *config = g_config->GetConfigLocation();
 
 	// Set progressbar value
+	currentPos = currentDecoder->GetPosition();
 	if (!sceKernelPollEventFlag(g_eventFlagUid, FLAG_ELEVENMPVA_IS_FG, SCE_KERNEL_EVF_WAITMODE_AND, SCE_NULL)) {
 		searchParam.hash = EMPVAUtils::GetHash("progressbar_player");
 		widget::ProgressBarTouch *playerProgBar = (widget::ProgressBarTouch *)g_player_page->GetChildByHash(&searchParam, 0);
 
-		currentPos = currentDecoder->GetPosition();
 		length = currentDecoder->GetLength();
 		currentPosSec = (SceUInt64)((SceFloat32)currentPos / (SceFloat32)currentDecoder->GetSampleRate());
 
@@ -253,7 +253,7 @@ SceVoid menu::audioplayer::Audioplayer::RegularTask(ScePVoid pUserData)
 		HandleNext(SCE_FALSE, SCE_FALSE);
 		return;
 	}
-	int ret = 0;
+
 	// Check Shell IPC
 	if (!EMPVAUtils::IsSleep()) {
 		ipcCom = EMPVAUtils::IPC::PeekTx();
