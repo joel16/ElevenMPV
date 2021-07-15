@@ -98,6 +98,8 @@ namespace menu {
 
 			static SceVoid HandleNext(SceBool fromHandlePrev, SceBool fromFfButton);
 
+			static SceVoid ReloadCoverForNext();
+
 			static SceVoid HandlePrev();
 
 			static SceVoid ConvertSecondsToString(String *string, SceUInt64 seconds, SceBool needSeparator);

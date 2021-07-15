@@ -57,6 +57,16 @@ static SceUInt64 s_oldCurrentPosSec = 0;
 
 static String *s_totalLength;
 
+SceVoid menu::audioplayer::Audioplayer::ReloadCoverForNext()
+{
+	// Handle cover
+	if (g_currentPlayerInstance->core->GetDecoder()->coverLoader == SCE_NULL && !g_currentPlayerInstance->core->GetDecoder()->GetMetadataLocation()->hasCover) {
+		g_currentPlayerInstance->core->GetDecoder()->coverLoader = new audio::PlayerCoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_HIGHEST_PRIORITY, SCE_KERNEL_4KiB, "EMPVA::PlayerCoverLoader");
+		g_currentPlayerInstance->core->GetDecoder()->coverLoader->workptr = SCE_NULL;
+		g_currentPlayerInstance->core->GetDecoder()->coverLoader->Start();
+	}
+}
+
 SceVoid menu::audioplayer::Audioplayer::HandleNext(SceBool fromHandlePrev, SceBool fromFfButton)
 {
 	Resource::Element searchParam;
@@ -77,6 +87,7 @@ SceVoid menu::audioplayer::Audioplayer::HandleNext(SceBool fromHandlePrev, SceBo
 
 	if (s_repeatState == REPEAT_STATE_ONE && !fromHandlePrev && !fromFfButton) {
 		g_currentPlayerInstance->core = new AudioplayerCore(g_currentPlayerInstance->playlist.path[g_currentPlayerInstance->playlistIdx]->data);
+		ReloadCoverForNext();
 		return;
 	}
 
@@ -132,12 +143,7 @@ SceVoid menu::audioplayer::Audioplayer::HandleNext(SceBool fromHandlePrev, SceBo
 	text8.Clear();
 	text16.Clear();
 
-	// Handle cover
-	if (g_currentPlayerInstance->core->GetDecoder()->coverLoader == SCE_NULL && !g_currentPlayerInstance->core->GetDecoder()->GetMetadataLocation()->hasCover) {
-		g_currentPlayerInstance->core->GetDecoder()->coverLoader = new audio::PlayerCoverLoaderThread(SCE_KERNEL_COMMON_QUEUE_HIGHEST_PRIORITY, SCE_KERNEL_4KiB, "EMPVA::PlayerCoverLoader");
-		g_currentPlayerInstance->core->GetDecoder()->coverLoader->workptr = SCE_NULL;
-		g_currentPlayerInstance->core->GetDecoder()->coverLoader->Start();
-	}
+	ReloadCoverForNext();
 }
 
 SceVoid menu::audioplayer::Audioplayer::HandlePrev()
